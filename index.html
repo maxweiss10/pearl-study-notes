@@ -7,9 +7,19 @@
   <meta name="apple-mobile-web-app-capable" content="yes" />
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
   <meta name="apple-mobile-web-app-title" content="Pearl" />
+  <meta http-equiv="cache-control" content="no-cache, no-store, must-revalidate" />
+  <meta http-equiv="pragma" content="no-cache" />
+  <meta http-equiv="expires" content="0" />
   <link rel="apple-touch-icon" href="data:image/svg+xml;utf8,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 180 180'%3E%3Crect width='180' height='180' rx='38' fill='%231a3a5c'/%3E%3Ctext x='50%25' y='60%25' font-family='-apple-system,BlinkMacSystemFont,Helvetica' font-size='100' text-anchor='middle' fill='white'%3E%F0%9F%93%93%3C/text%3E%3C/svg%3E" />
   <title>Pearl — Study Notes</title>
-  <link rel="stylesheet" href="style.css" />
+
+  <!-- Build version is bumped on every deploy by ./bump.sh to force cache invalidation -->
+  <script>window.PEARL_BUILD="20260416-192527";</script>
+  <script>
+    // Rewrite all asset URLs with the build version
+    document.addEventListener("DOMContentLoaded", () => {});
+  </script>
+  <link rel="stylesheet" id="pearl-style" href="style.css" />
 </head>
 <body>
   <header class="topbar">
@@ -37,7 +47,7 @@
         <div id="dropZone" class="filedrop" tabindex="0" role="button" aria-label="Pick or drop images">
           <span class="filedrop-hint">Tap to pick (or drag here on desktop)</span>
         </div>
-        <input type="file" id="files" accept="image/*,.heic,.HEIC" multiple hidden />
+        <input type="file" id="files" accept="image/*,.heic,.HEIC,.heif,.HEIF" multiple hidden />
         <div id="fileList" class="filelist"></div>
       </div>
 
@@ -68,21 +78,46 @@
     </section>
 
     <section class="actions">
-      <button id="generateBtn" class="primary">Generate</button>
+      <button id="generateBtn" class="primary" disabled>Loading…</button>
       <button id="submitBtn" class="primary hidden">Add to Pearl</button>
       <div id="status" class="status"></div>
+    </section>
+
+    <!-- Diagnostic panel, toggled by tapping the footer version -->
+    <section id="diagPanel" class="card hidden diag">
+      <div class="diag-header">
+        <span class="label">Diagnostics</span>
+        <button id="diagCopy" class="link-btn" type="button" title="Copy diagnostics">📋</button>
+        <button id="diagClose" class="link-btn" type="button" title="Close">✕</button>
+      </div>
+      <pre id="diagBody"></pre>
     </section>
 
   </main>
 
   <footer class="footer">
+    <span id="buildVersion" title="Tap to toggle diagnostics">build loading…</span>
     <span id="config-notice"></span>
   </footer>
 
-  <!-- html2canvas + heic2any via CDN -->
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js" defer></script>
-  <script src="https://cdn.jsdelivr.net/npm/heic2any@0.0.4/dist/heic2any.min.js" defer></script>
-  <script src="config.js" defer></script>
-  <script src="app.js" defer></script>
+  <!-- Load libs BEFORE app.js so they're ready when ready-gate checks -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/heic2any@0.0.4/dist/heic2any.min.js"></script>
+  <script>
+    // Version-bust the site-owned scripts so iterations don't get stuck on old CDN caches
+    (function () {
+      var v = window.PEARL_BUILD || String(Date.now());
+      var link = document.getElementById("pearl-style");
+      if (link) link.href = "style.css?v=" + v;
+      function load(src) {
+        var s = document.createElement("script");
+        s.src = src + "?v=" + v;
+        s.defer = false;
+        document.body.appendChild(s);
+      }
+      load("config.js");
+      load("app.js");
+    })();
+  </script>
 </body>
 </html>
