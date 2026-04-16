@@ -1,11 +1,53 @@
-// Pearl — frontend logic
-// Modes:
-//   polished-single, raw-single, each, merge-polished, merge-raw, paper
+// Pearl — frontend logic (V5.1 reliability hardening)
+// Modes: polished-single, raw-single, each, merge-polished, merge-raw, paper
 
 const cfg = window.PEARL_CONFIG || {};
 const WORKER = cfg.WORKER_URL || "";
 const TOKEN  = cfg.CLIENT_TOKEN || "";
 const DOC    = cfg.DOC_URL || "";
+const BUILD  = window.PEARL_BUILD || "dev";
+
+// ── Diagnostics ring buffer ──────────────────────────────────────────────────
+const diag = {
+  errors: [],
+  events: [],
+  log(msg, data) {
+    const entry = `${new Date().toISOString().slice(11,23)}  ${msg}` + (data ? `  ${JSON.stringify(data)}` : "");
+    this.events.push(entry);
+    if (this.events.length > 60) this.events.shift();
+  },
+  error(label, err) {
+    const entry = `${new Date().toISOString().slice(11,23)}  ${label}: ${err?.message || err}\n${err?.stack || ""}`;
+    this.errors.push(entry);
+    if (this.errors.length > 20) this.errors.shift();
+    console.error(label, err);
+  },
+  snapshot() {
+    const lines = [];
+    lines.push("PEARL diagnostics");
+    lines.push(`Build:   ${BUILD}`);
+    lines.push(`Worker:  ${WORKER || "(unset)"}`);
+    lines.push(`Doc:     ${DOC || "(unset)"}`);
+    lines.push(`UA:      ${navigator.userAgent}`);
+    lines.push(`heic2any loaded:   ${typeof window.heic2any === "function"}`);
+    lines.push(`html2canvas loaded: ${typeof window.html2canvas === "function"}`);
+    lines.push(`Selected files (${state.selectedFiles.length}):`);
+    for (const f of state.selectedFiles) {
+      const det = state.fileMeta.get(f) || {};
+      lines.push(`  - ${f.name || "(no name)"} [${f.type || "no mime"}] ${f.size}B  heicName=${det.heicName} heicMime=${det.heicMime} heicSniff=${det.heicSniff ?? "?"} sniffHex=${det.sniffHex ?? "?"}  status=${det.status ?? "-"}${det.error ? " err=" + det.error : ""}`);
+    }
+    lines.push("");
+    lines.push("Events (most recent last):");
+    for (const e of this.events) lines.push("  " + e);
+    lines.push("");
+    lines.push("Errors:");
+    for (const e of this.errors) lines.push("  " + e.split("\n").join("\n    "));
+    return lines.join("\n");
+  },
+};
+
+window.addEventListener("error", (e) => diag.error("window.error", e.error || new Error(e.message)));
+window.addEventListener("unhandledrejection", (e) => diag.error("unhandledrejection", e.reason));
 
 // ── Elements ─────────────────────────────────────────────────────────────────
 const el = {
@@ -28,13 +70,19 @@ const el = {
   status:      document.getElementById("status"),
   openDoc:     document.getElementById("openDoc"),
   cfgNotice:   document.getElementById("config-notice"),
+  build:       document.getElementById("buildVersion"),
+  diagPanel:   document.getElementById("diagPanel"),
+  diagBody:    document.getElementById("diagBody"),
+  diagCopy:    document.getElementById("diagCopy"),
+  diagClose:   document.getElementById("diagClose"),
 };
 
 // ── State ────────────────────────────────────────────────────────────────────
-let state = {
+const state = {
   selectedFiles: [],
-  // The prepared artifacts for submission, keyed by mode behavior
-  artifacts: null, // { type: "polished" | "raw" | "stacked-raw" | "paper" | "each", ... }
+  fileMeta: new Map(),   // File → { heicName, heicMime, heicSniff, sniffHex, status, error }
+  artifacts: null,
+  isHandlingDrop: false,
 };
 
 // ── Init ─────────────────────────────────────────────────────────────────────
@@ -43,30 +91,51 @@ if (!WORKER || !TOKEN) {
   el.cfgNotice.textContent = "⚠️ config.js not loaded — set WORKER_URL and CLIENT_TOKEN.";
   el.cfgNotice.style.color = "#8b2a2a";
 }
+el.build.textContent = "v" + BUILD;
+
+// Diagnostic panel wiring
+el.build.addEventListener("click", () => {
+  el.diagBody.textContent = diag.snapshot();
+  el.diagPanel.classList.toggle("hidden");
+});
+el.diagClose.addEventListener("click", () => el.diagPanel.classList.add("hidden"));
+el.diagCopy.addEventListener("click", async () => {
+  try {
+    await navigator.clipboard.writeText(diag.snapshot());
+    el.diagCopy.textContent = "✓";
+    setTimeout(() => (el.diagCopy.textContent = "📋"), 1200);
+  } catch (err) {
+    diag.error("clipboard", err);
+  }
+});
+
+// Library-ready gate
+function librariesReady() {
+  return typeof window.heic2any === "function" && typeof window.html2canvas === "function";
+}
+(function waitForLibs() {
+  if (librariesReady()) {
+    el.generateBtn.disabled = false;
+    el.generateBtn.textContent = "Generate";
+    diag.log("Libraries ready");
+  } else {
+    el.generateBtn.disabled = true;
+    el.generateBtn.textContent = "Loading…";
+    setTimeout(waitForLibs, 100);
+  }
+})();
 
 el.mode.addEventListener("change", onModeChange);
 el.files.addEventListener("change", onFilesChange);
 el.generateBtn.addEventListener("click", onGenerate);
 el.submitBtn.addEventListener("click", onSubmit);
 el.regenerate.addEventListener("click", onGenerate);
-
-// Tap the drop zone → open the file picker
 el.dropZone.addEventListener("click", () => el.files.click());
 el.dropZone.addEventListener("keydown", (e) => {
   if (e.key === "Enter" || e.key === " ") { e.preventDefault(); el.files.click(); }
 });
 
-// Drag-and-drop wiring — on the div (no <label>/input interference)
-function handleDroppedFiles(fileList) {
-  const files = Array.from(fileList || []).filter(
-    (f) => f.type.startsWith("image/") || /\.(heic|png|jpe?g|gif|webp)$/i.test(f.name)
-  );
-  if (!files.length) return;
-  state.selectedFiles = files;
-  renderThumbnails();
-  resetPreview();
-}
-
+// Drag-and-drop
 ["dragenter", "dragover"].forEach((evt) =>
   el.dropZone.addEventListener(evt, (e) => {
     e.preventDefault();
@@ -87,60 +156,152 @@ el.dropZone.addEventListener("drop", (e) => {
   el.dropZone.classList.remove("dragover");
   handleDroppedFiles(e.dataTransfer?.files);
 });
-
-// Prevent the browser from opening a dropped image if user misses the drop zone
 ["dragover", "drop"].forEach((evt) =>
   window.addEventListener(evt, (e) => {
-    // Only preventDefault if drop is outside our drop zone, to avoid blocking the zone's drop
     if (!el.dropZone.contains(e.target)) e.preventDefault();
   })
 );
 
 onModeChange();
 
-// ── Mode switching ───────────────────────────────────────────────────────────
+// ── Mode ──────────────────────────────────────────────────────────────────────
 function onModeChange() {
   const mode = el.mode.value;
-  const needsFiles = mode !== "paper";
-  const needsUrl   = mode === "paper";
-
-  el.fileField.classList.toggle("hidden", !needsFiles);
-  el.urlField.classList.toggle("hidden", !needsUrl);
-  // Always allow multiple files — the mode decides what to do with them at Generate time
+  el.fileField.classList.toggle("hidden", mode === "paper");
+  el.urlField.classList.toggle("hidden", mode !== "paper");
   el.files.setAttribute("multiple", "");
-
-  // Reset preview when mode changes
   resetPreview();
 }
 
 function onFilesChange() {
-  state.selectedFiles = Array.from(el.files.files || []);
-  renderThumbnails();
-  resetPreview();
+  handleDroppedFiles(el.files.files);
 }
 
+function handleDroppedFiles(fileList) {
+  if (state.isHandlingDrop) { diag.log("drop ignored (concurrency guard)"); return; }
+  state.isHandlingDrop = true;
+  try {
+    const raw = Array.from(fileList || []);
+    diag.log("drop received", { count: raw.length });
+
+    // Loosened filter: keep anything that could plausibly be an image
+    const files = raw.filter((f) => {
+      if (f.type && f.type.startsWith("image/")) return true;
+      if (/\.(heic|heif|png|jpe?g|gif|webp|bmp|tiff?|avif)$/i.test(f.name)) return true;
+      // No extension/type but non-trivial size — keep and let conversion decide
+      if (!f.type && !/\./.test(f.name) && f.size > 1024) return true;
+      return false;
+    });
+
+    if (!files.length) {
+      diag.log("drop filtered to 0 files", { rawNames: raw.map((f) => f.name) });
+      return;
+    }
+
+    state.selectedFiles = files;
+    state.fileMeta = new Map();
+    for (const f of files) {
+      state.fileMeta.set(f, {
+        heicName: /\.(heic|heif)$/i.test(f.name || ""),
+        heicMime: f.type === "image/heic" || f.type === "image/heif",
+      });
+    }
+    diag.log("accepted files", { count: files.length, names: files.map((f) => f.name) });
+
+    // Run content-sniff in the background so the diagnostic panel has full info
+    files.forEach((f) => sniffHeic(f).then((sniff) => {
+      const meta = state.fileMeta.get(f);
+      if (meta) { meta.heicSniff = sniff.isHeic; meta.sniffHex = sniff.hex; }
+    }));
+
+    renderThumbnails();
+    resetPreview();
+  } finally {
+    // Release after a tick so bubbled duplicate events see the guard
+    setTimeout(() => { state.isHandlingDrop = false; }, 200);
+  }
+}
+
+// ── HEIC detection ────────────────────────────────────────────────────────────
+function isHeicFast(file) {
+  if (!file) return false;
+  if (/\.(heic|heif)$/i.test(file.name || "")) return true;
+  if (file.type === "image/heic" || file.type === "image/heif") return true;
+  return false;
+}
+
+async function sniffHeic(file) {
+  // ISO BMFF HEIC/HEIF: bytes 4..8 = "ftyp", bytes 8..12 in {heic,heix,hevc,hevx,mif1,msf1,heim,heis,hevm,hevs}
+  try {
+    const slice = await file.slice(0, 12).arrayBuffer();
+    const bytes = new Uint8Array(slice);
+    const hex = Array.from(bytes).map((b) => b.toString(16).padStart(2, "0")).join("");
+    const brand = String.fromCharCode(bytes[4], bytes[5], bytes[6], bytes[7]);
+    const major = String.fromCharCode(bytes[8], bytes[9], bytes[10], bytes[11]);
+    const isHeic = brand === "ftyp" && /^(heic|heix|hevc|hevx|mif1|msf1|heim|heis|hevm|hevs)$/.test(major);
+    return { isHeic, hex, major };
+  } catch (err) {
+    diag.error("sniffHeic", err);
+    return { isHeic: false, hex: "", major: "" };
+  }
+}
+
+async function isHeicAccurate(file) {
+  if (isHeicFast(file)) return true;
+  const s = await sniffHeic(file);
+  return s.isHeic;
+}
+
+// ── Thumbnails ───────────────────────────────────────────────────────────────
 function renderThumbnails() {
   el.fileList.innerHTML = "";
   for (const f of state.selectedFiles) {
-    if (!f.type.startsWith("image/") && !/\.(heic|heif|png|jpe?g|gif|webp)$/i.test(f.name)) continue;
+    const wrap = document.createElement("div");
+    wrap.className = "thumb-wrap";
+    const label = document.createElement("div");
+    label.className = "thumb-name";
+    label.textContent = f.name.length > 18 ? f.name.slice(0, 15) + "…" : f.name;
+    label.title = f.name;
 
-    // HEIC can't be rendered directly in browsers — show a filename chip instead of a broken <img>
-    if (isHeic(f)) {
+    if (isHeicFast(f)) {
+      // Show filename chip; browsers can't render HEIC natively
       const chip = document.createElement("div");
       chip.className = "thumb filename-chip";
-      chip.textContent = f.name.length > 18 ? f.name.slice(0, 15) + "…" : f.name;
-      chip.title = f.name;
-      el.fileList.appendChild(chip);
-      continue;
+      chip.textContent = "HEIC";
+      wrap.appendChild(chip);
+    } else {
+      const img = document.createElement("img");
+      img.className = "thumb";
+      img.alt = f.name;
+      img.onerror = () => {
+        img.remove();
+        const chip = document.createElement("div");
+        chip.className = "thumb filename-chip";
+        chip.textContent = "IMG";
+        wrap.insertBefore(chip, label);
+      };
+      const reader = new FileReader();
+      reader.onload = (e) => (img.src = e.target.result);
+      reader.readAsDataURL(f);
+      wrap.appendChild(img);
     }
+    wrap.appendChild(label);
+    state.fileMeta.get(f) && (state.fileMeta.get(f)._wrap = wrap);
+    el.fileList.appendChild(wrap);
+  }
+}
 
-    const img = document.createElement("img");
-    img.className = "thumb";
-    img.alt = f.name;
-    const reader = new FileReader();
-    reader.onload = (e) => (img.src = e.target.result);
-    reader.readAsDataURL(f);
-    el.fileList.appendChild(img);
+function markFileStatus(file, status, error) {
+  const meta = state.fileMeta.get(file);
+  if (!meta) return;
+  meta.status = status;
+  if (error) meta.error = error;
+  const wrap = meta._wrap;
+  if (wrap) {
+    wrap.classList.remove("thumb-ok", "thumb-fail", "thumb-busy");
+    if (status === "done") wrap.classList.add("thumb-ok");
+    else if (status === "failed") { wrap.classList.add("thumb-fail"); wrap.title = error || "failed"; }
+    else wrap.classList.add("thumb-busy");
   }
 }
 
@@ -152,12 +313,15 @@ function resetPreview() {
   setStatus("");
 }
 
-// ── Generate (prepare artifacts) ─────────────────────────────────────────────
+// ── Generate ─────────────────────────────────────────────────────────────────
 async function onGenerate() {
+  if (!librariesReady()) {
+    setStatus("Converters still loading — try again in a moment.", "error");
+    return;
+  }
   const mode = el.mode.value;
   setStatus("Working…");
   el.generateBtn.disabled = true;
-
   try {
     switch (mode) {
       case "polished-single": await prepPolished(false); break;
@@ -172,103 +336,116 @@ async function onGenerate() {
     el.submitBtn.classList.remove("hidden");
     setStatus("");
   } catch (err) {
+    diag.error("onGenerate:" + mode, err);
     setStatus("Error: " + err.message, "error");
   } finally {
     el.generateBtn.disabled = false;
   }
 }
 
-// ── Preparers by mode ────────────────────────────────────────────────────────
-
+// ── Mode preparers ───────────────────────────────────────────────────────────
 async function prepPolished(isMerge) {
   if (!state.selectedFiles.length) throw new Error("Pick at least one image");
   if (!isMerge && state.selectedFiles.length > 1) {
-    // Auto-switch to a multi mode — ask the user which flavor
     const choice = confirm(
       `${state.selectedFiles.length} images selected. OK = merge into one polished entry, Cancel = one polished entry per image.`
     );
     el.mode.value = choice ? "merge-polished" : "each";
     onModeChange();
-    // re-trigger generate with the new mode
     return choice ? prepPolished(true) : prepEach();
   }
 
-  const images = await Promise.all(state.selectedFiles.map(async (f) => {
-    const pngBlob = await convertToPngBlob(f);
-    return { base64: await blobToBase64(pngBlob), mimeType: "image/png" };
-  }));
+  const images = [];
+  for (let i = 0; i < state.selectedFiles.length; i++) {
+    const f = state.selectedFiles[i];
+    setStatus(`Converting ${i + 1}/${state.selectedFiles.length}…`);
+    markFileStatus(f, "busy");
+    try {
+      const pngBlob = await convertToPngBlob(f);
+      const b64 = await blobToBase64(pngBlob);
+      images.push({ base64: b64, mimeType: "image/png" });
+      markFileStatus(f, "done");
+    } catch (err) {
+      markFileStatus(f, "failed", err.message);
+      throw new Error(`File "${f.name}": ${err.message}`);
+    }
+  }
 
+  setStatus("Generating polished design with AI…");
   const res = await workerPost("/polish", { images });
-
-  // Render HTML to PNG in the browser
+  setStatus("Rendering preview…");
   const pngBlob = await renderHtmlToPng(res.html);
   const pngB64  = await blobToBase64(pngBlob);
 
-  // Populate preview with the rendered PNG
   el.preview.innerHTML = "";
   const img = document.createElement("img");
   img.src = "data:image/png;base64," + pngB64;
   el.preview.appendChild(img);
-
   el.title.value = res.title || "";
   el.keywords.value = res.keywords || "";
   el.bodyField.classList.add("hidden");
-
-  state.artifacts = {
-    type: "polished",
-    imageBase64: pngB64,
-    mimeType: "image/png",
-  };
+  state.artifacts = { type: "polished", imageBase64: pngB64, mimeType: "image/png" };
 }
 
 async function prepRawSingle() {
   if (state.selectedFiles.length === 0) throw new Error("Pick an image");
   if (state.selectedFiles.length > 1) {
-    // Auto-switch to merge-raw (stacked) for multiple raw photos
     el.mode.value = "merge-raw";
     onModeChange();
     return prepMergeRaw();
   }
   const f = state.selectedFiles[0];
-  const pngBlob = await convertToPngBlob(f);
-  const pngB64  = await blobToBase64(pngBlob);
-
-  el.preview.innerHTML = "";
-  const img = document.createElement("img");
-  img.src = "data:image/png;base64," + pngB64;
-  el.preview.appendChild(img);
-
-  // For raw modes, user types title + keywords manually (no AI)
-  el.title.value = el.title.value || "";
-  el.keywords.value = el.keywords.value || "";
-  el.bodyField.classList.add("hidden");
-
-  state.artifacts = { type: "raw", imageBase64: pngB64, mimeType: "image/png" };
+  markFileStatus(f, "busy");
+  try {
+    const pngBlob = await convertToPngBlob(f);
+    const pngB64  = await blobToBase64(pngBlob);
+    markFileStatus(f, "done");
+    el.preview.innerHTML = "";
+    const img = document.createElement("img");
+    img.src = "data:image/png;base64," + pngB64;
+    el.preview.appendChild(img);
+    el.bodyField.classList.add("hidden");
+    state.artifacts = { type: "raw", imageBase64: pngB64, mimeType: "image/png" };
+  } catch (err) {
+    markFileStatus(f, "failed", err.message);
+    throw err;
+  }
 }
 
 async function prepEach() {
   if (state.selectedFiles.length < 1) throw new Error("Pick at least one image");
-
-  // Each image → its own polished entry. We prepare all now, submit them sequentially.
   const entries = [];
-  for (const [i, f] of state.selectedFiles.entries()) {
-    setStatus(`Generating ${i + 1} / ${state.selectedFiles.length}…`);
-    const pngBlob = await convertToPngBlob(f);
-    const b64 = await blobToBase64(pngBlob);
-    const res = await workerPost("/polish", {
-      images: [{ base64: b64, mimeType: "image/png" }],
-    });
-    const renderedPng = await renderHtmlToPng(res.html);
-    const renderedB64 = await blobToBase64(renderedPng);
-    entries.push({
-      title: res.title || `Entry ${i + 1}`,
-      keywords: res.keywords || "",
-      imageBase64: renderedB64,
-      mimeType: "image/png",
-    });
+  const failures = [];
+  for (let i = 0; i < state.selectedFiles.length; i++) {
+    const f = state.selectedFiles[i];
+    const label = `${i + 1}/${state.selectedFiles.length}`;
+    try {
+      setStatus(`${label}: Converting…`);
+      markFileStatus(f, "busy");
+      const pngBlob = await convertToPngBlob(f);
+      const b64 = await blobToBase64(pngBlob);
+      setStatus(`${label}: AI analyzing…`);
+      const res = await workerPost("/polish", { images: [{ base64: b64, mimeType: "image/png" }] });
+      setStatus(`${label}: Rendering…`);
+      const renderedPng = await renderHtmlToPng(res.html);
+      const renderedB64 = await blobToBase64(renderedPng);
+      entries.push({
+        title: res.title || `Entry ${i + 1}`,
+        keywords: res.keywords || "",
+        imageBase64: renderedB64,
+        mimeType: "image/png",
+      });
+      markFileStatus(f, "done");
+    } catch (err) {
+      diag.error(`prepEach file ${f.name}`, err);
+      markFileStatus(f, "failed", err.message);
+      failures.push({ name: f.name, error: err.message });
+    }
   }
 
-  // Preview: show all rendered previews stacked, disable editable title/keywords
+  if (!entries.length) throw new Error("All files failed: " + failures.map((f) => f.name).join(", "));
+
+  // Preview: stacked mini-cards
   el.preview.innerHTML = "";
   for (const e of entries) {
     const block = document.createElement("div");
@@ -283,31 +460,46 @@ async function prepEach() {
     block.appendChild(kws);
     el.preview.appendChild(block);
   }
-
+  if (failures.length) {
+    const warn = document.createElement("div");
+    warn.style.cssText = "color:#8b2a2a;font-size:13px;margin-top:10px;";
+    warn.textContent = `⚠️ ${failures.length} failed: ${failures.map((f) => f.name).join(", ")}`;
+    el.preview.appendChild(warn);
+  }
   el.title.value = `${entries.length} entries — titles auto-set per image`;
   el.title.disabled = true;
   el.keywords.value = "(auto per entry)";
   el.keywords.disabled = true;
   el.bodyField.classList.add("hidden");
-
   state.artifacts = { type: "each", entries };
 }
 
 async function prepMergeRaw() {
   if (state.selectedFiles.length < 1) throw new Error("Pick at least one image");
 
-  // Convert each, stack vertically on a canvas
-  const pngBlobs = await Promise.all(state.selectedFiles.map(convertToPngBlob));
-  const imgs    = await Promise.all(pngBlobs.map(blobToImage));
-  const W       = Math.max(...imgs.map((i) => i.naturalWidth));
-  const GAP     = 18;
-  const scaled  = imgs.map((i) => {
+  const pngBlobs = [];
+  for (let i = 0; i < state.selectedFiles.length; i++) {
+    const f = state.selectedFiles[i];
+    setStatus(`Converting ${i + 1}/${state.selectedFiles.length}…`);
+    markFileStatus(f, "busy");
+    try {
+      pngBlobs.push(await convertToPngBlob(f));
+      markFileStatus(f, "done");
+    } catch (err) {
+      markFileStatus(f, "failed", err.message);
+      throw new Error(`File "${f.name}": ${err.message}`);
+    }
+  }
+
+  setStatus("Stacking images…");
+  const imgs = await Promise.all(pngBlobs.map(blobToImage));
+  const W = Math.max(...imgs.map((i) => i.naturalWidth));
+  const GAP = 18;
+  const scaled = imgs.map((i) => {
     if (i.naturalWidth === W) return { img: i, h: i.naturalHeight };
-    const h = Math.round((i.naturalHeight * W) / i.naturalWidth);
-    return { img: i, h };
+    return { img: i, h: Math.round((i.naturalHeight * W) / i.naturalWidth) };
   });
   const H = scaled.reduce((s, x) => s + x.h, 0) + GAP * (scaled.length - 1);
-
   const canvas = document.createElement("canvas");
   canvas.width  = W;
   canvas.height = H;
@@ -319,14 +511,11 @@ async function prepMergeRaw() {
     ctx.drawImage(s.img, 0, y, W, s.h);
     y += s.h + GAP;
   }
-
   const pngB64 = canvas.toDataURL("image/png").split(",")[1];
-
   el.preview.innerHTML = "";
   const img = document.createElement("img");
   img.src = "data:image/png;base64," + pngB64;
   el.preview.appendChild(img);
-
   el.bodyField.classList.add("hidden");
   state.artifacts = { type: "raw", imageBase64: pngB64, mimeType: "image/png" };
 }
@@ -334,9 +523,8 @@ async function prepMergeRaw() {
 async function prepPaper() {
   const url = el.urlInput.value.trim();
   if (!url) throw new Error("Paste a URL");
-
+  setStatus("Fetching + summarizing…");
   const res = await workerPost("/paper", { url });
-
   el.preview.innerHTML = "";
   const wrap = document.createElement("div");
   wrap.className = "paper-preview";
@@ -348,30 +536,25 @@ async function prepPaper() {
     wrap.appendChild(el2);
   }
   el.preview.appendChild(wrap);
-
   el.title.value = res.title || "";
   el.title.disabled = false;
   el.keywords.value = res.keywords || "";
   el.keywords.disabled = false;
   el.bodyInput.value = res.bodyText || "";
   el.bodyField.classList.remove("hidden");
-
   state.artifacts = { type: "paper", sourceUrl: url };
 }
 
-// ── Submit (send artifacts to Apps Script) ───────────────────────────────────
+// ── Submit ───────────────────────────────────────────────────────────────────
 async function onSubmit() {
   if (!state.artifacts) { setStatus("Generate first.", "error"); return; }
   el.submitBtn.disabled = true;
   setStatus("Uploading…");
-
   try {
     if (state.artifacts.type === "each") {
-      let i = 0;
-      for (const entry of state.artifacts.entries) {
-        i++;
-        setStatus(`Uploading ${i} / ${state.artifacts.entries.length}…`);
-        await workerPost("/submit", entry);
+      for (let i = 0; i < state.artifacts.entries.length; i++) {
+        setStatus(`Uploading ${i + 1}/${state.artifacts.entries.length}…`);
+        await workerPost("/submit", state.artifacts.entries[i]);
       }
       setStatus(`Added ${state.artifacts.entries.length} entries to Pearl.`, "success");
     } else if (state.artifacts.type === "paper") {
@@ -391,19 +574,18 @@ async function onSubmit() {
       });
       setStatus(`Added "${el.title.value.trim()}" to Pearl.`, "success");
     }
-
-    // Reset for next
     setTimeout(() => {
       resetPreview();
       state.selectedFiles = [];
+      state.fileMeta = new Map();
       el.files.value = "";
       el.fileList.innerHTML = "";
       el.urlInput.value = "";
       el.title.disabled = false;
       el.keywords.disabled = false;
     }, 1500);
-
   } catch (err) {
+    diag.error("onSubmit", err);
     setStatus("Error: " + err.message, "error");
   } finally {
     el.submitBtn.disabled = false;
@@ -411,62 +593,48 @@ async function onSubmit() {
 }
 
 // ── Helpers ──────────────────────────────────────────────────────────────────
-
 async function workerPost(path, body) {
   if (!WORKER) throw new Error("WORKER_URL not configured");
   const resp = await fetch(WORKER + path, {
     method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-      "X-Client-Token": TOKEN,
-    },
+    headers: { "Content-Type": "application/json", "X-Client-Token": TOKEN },
     body: JSON.stringify(body),
   });
   const json = await resp.json().catch(() => ({}));
-  if (!resp.ok || json.error) {
-    throw new Error(json.error || `Worker ${resp.status}`);
-  }
+  if (!resp.ok || json.error) throw new Error(json.error || `Worker ${resp.status}`);
   return json;
 }
 
-// iOS Safari can't decode HEIC via <img>. Use a <canvas> path with createImageBitmap
-// when possible; otherwise send original bytes as PNG fallback (HEIC → raw upload
-// works because the browser side only needs to display a thumbnail, and the Apps Script
-// path handles image bytes directly). For robust HEIC support, we rely on the browser
-// to decode HEIC directly (iOS Safari does this since 17).
-// Target size for uploaded images — balances quality with payload speed.
-// iPhone photos are often 4000px+; 1600 on the long edge is still sharp in a Google Doc.
 const MAX_DIM = 1600;
 
-function isHeic(file) {
-  return /\.heic$/i.test(file.name) || /\.heif$/i.test(file.name) || file.type === "image/heic" || file.type === "image/heif";
-}
-
 async function convertToPngBlob(originalFile) {
-  // HEIC: desktop Chrome/Safari can't decode these natively. Convert via heic2any first.
+  diag.log("convertToPngBlob", { name: originalFile.name, size: originalFile.size, type: originalFile.type });
   let file = originalFile;
-  if (isHeic(file)) {
+
+  const heic = await isHeicAccurate(file);
+  diag.log("heic detection", { name: file.name, isHeic: heic });
+
+  if (heic) {
     if (typeof heic2any !== "function") {
-      throw new Error("HEIC converter not loaded — check your internet connection and reload.");
+      throw new Error("HEIC converter not loaded (heic2any). Refresh the page.");
     }
     try {
       const jpegBlob = await heic2any({ blob: file, toType: "image/jpeg", quality: 0.9 });
       file = Array.isArray(jpegBlob) ? jpegBlob[0] : jpegBlob;
+      diag.log("heic2any converted", { size: file.size });
     } catch (err) {
+      diag.error("heic2any", err);
       throw new Error("Could not decode HEIC: " + (err.message || err));
     }
   }
 
   let width, height, source;
-
-  // Modern path: createImageBitmap works on most browsers for JPG/PNG/WebP
   try {
     const bitmap = await createImageBitmap(file);
     width  = bitmap.width;
     height = bitmap.height;
     source = bitmap;
   } catch (e) {
-    // Fallback: use Image() decode
     const dataUrl = await new Promise((resolve, reject) => {
       const r = new FileReader();
       r.onload = () => resolve(r.result);
@@ -476,7 +644,7 @@ async function convertToPngBlob(originalFile) {
     const img = await new Promise((resolve, reject) => {
       const i = new Image();
       i.onload = () => resolve(i);
-      i.onerror = () => reject(new Error("Could not decode image — try a JPG/PNG"));
+      i.onerror = () => reject(new Error("Could not decode image — browser can't read this format"));
       i.src = dataUrl;
     });
     width  = img.naturalWidth;
@@ -484,14 +652,12 @@ async function convertToPngBlob(originalFile) {
     source = img;
   }
 
-  // Downscale to MAX_DIM on the long edge
   const longEdge = Math.max(width, height);
   if (longEdge > MAX_DIM) {
     const scale = MAX_DIM / longEdge;
     width  = Math.round(width * scale);
     height = Math.round(height * scale);
   }
-
   const canvas = document.createElement("canvas");
   canvas.width  = width;
   canvas.height = height;
@@ -511,32 +677,25 @@ function blobToImage(blob) {
 function blobToBase64(blob) {
   return new Promise((resolve, reject) => {
     const reader = new FileReader();
-    reader.onload  = () => resolve(reader.result.split(",")[1]); // strip data:...;base64,
+    reader.onload  = () => resolve(reader.result.split(",")[1]);
     reader.onerror = reject;
     reader.readAsDataURL(blob);
   });
 }
 
 async function renderHtmlToPng(htmlString) {
-  // Create an offscreen iframe sized to 800px (matches CLI render width)
   const iframe = document.createElement("iframe");
   iframe.className = "polish-frame";
   iframe.style.cssText = "position:absolute;left:-9999px;top:0;width:800px;border:none;background:#fff;";
   document.body.appendChild(iframe);
-
   const doc = iframe.contentDocument;
   doc.open();
   doc.write(`<!DOCTYPE html><html><head><meta charset="utf-8"></head>
-    <body style="margin:0;padding:0;background:#fff;">
-    ${htmlString}
-    </body></html>`);
+    <body style="margin:0;padding:0;background:#fff;">${htmlString}</body></html>`);
   doc.close();
-
-  // Wait for content to render
   await new Promise((r) => setTimeout(r, 200));
 
-  const root = doc.body;
-  const canvas = await html2canvas(root, {
+  const canvas = await html2canvas(doc.body, {
     backgroundColor: "#ffffff",
     scale: 2,
     useCORS: true,
@@ -544,10 +703,7 @@ async function renderHtmlToPng(htmlString) {
     width: 800,
     windowWidth: 800,
   });
-
-  // Trim trailing whitespace
   const trimmed = trimWhitespace(canvas);
-
   document.body.removeChild(iframe);
   return await new Promise((resolve) => trimmed.toBlob(resolve, "image/png", 0.95));
 }
@@ -556,22 +712,17 @@ function trimWhitespace(canvas) {
   const ctx = canvas.getContext("2d");
   const { width, height } = canvas;
   const data = ctx.getImageData(0, 0, width, height).data;
-
   let bottom = 0;
   for (let y = height - 1; y >= 0; y--) {
     let rowHasContent = false;
     for (let x = 0; x < width; x++) {
       const i = (y * width + x) * 4;
-      const r = data[i], g = data[i + 1], b = data[i + 2];
-      if (r < 250 || g < 250 || b < 250) { rowHasContent = true; break; }
+      if (data[i] < 250 || data[i + 1] < 250 || data[i + 2] < 250) { rowHasContent = true; break; }
     }
     if (rowHasContent) { bottom = y + 1; break; }
   }
-
-  const margin = 24;
-  const newH = Math.min(height, bottom + margin);
+  const newH = Math.min(height, bottom + 24);
   if (newH === height) return canvas;
-
   const out = document.createElement("canvas");
   out.width  = width;
   out.height = newH;
