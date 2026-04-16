@@ -117,7 +117,7 @@ function librariesReady() {
 (function waitForLibs() {
   if (librariesReady()) {
     el.generateBtn.disabled = false;
-    el.generateBtn.textContent = "Generate";
+    el.generateBtn.textContent = "Add to Pearl";
     diag.log("Libraries ready");
   } else {
     el.generateBtn.disabled = true;
@@ -343,8 +343,8 @@ async function onGenerate() {
       default: throw new Error("Unknown mode");
     }
     el.previewSec.classList.remove("hidden");
-    el.submitBtn.classList.remove("hidden");
-    setStatus("");
+    // Auto-submit immediately after prep succeeds
+    await onSubmit();
   } catch (err) {
     diag.error("onGenerate:" + mode, err);
     setStatus("Error: " + err.message, "error");

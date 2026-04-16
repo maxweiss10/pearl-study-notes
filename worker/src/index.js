@@ -3,35 +3,88 @@
 // Secrets (ANTHROPIC_API_KEY, STUDY_NOTES_SECRET, STUDY_NOTES_WEBAPP_URL, CLIENT_TOKEN)
 // are set via `wrangler secret put`.
 
-const ANTHROPIC_MODEL = "claude-sonnet-4-5";
+// Opus for polished-recreation calls (best vision + design quality).
+// Sonnet for paper-URL summaries (cheaper, quality is fine for text extraction).
+const MODEL_POLISH = "claude-opus-4-5";
+const MODEL_PAPER  = "claude-sonnet-4-5";
 const ANTHROPIC_URL = "https://api.anthropic.com/v1/messages";
 
-const POLISH_SYSTEM_PROMPT = `You are helping build a medical study notes Google Doc entry from chalktalk/slide photos.
+const POLISH_SYSTEM_PROMPT = `You are building a polished medical study-notes entry from chalktalk/slide photos. Think like an infographic designer who also writes a thorough back-of-book index.
 
-Given one or more images, produce a JSON object with exactly these fields:
+Given one or more images, produce a JSON object with exactly these fields and nothing else:
 
 {
-  "title":    string (2-6 words, standard medical terminology, e.g. "WHO Analgesic Ladder", "Inpatient Sleep Management"),
-  "html":     string (self-contained HTML — a <style> block plus a content <div>, NO <html>/<head>/<body>),
-  "keywords": string (comma-separated, lowercase, 8-15 tight tokens — drug names generic+brand, conditions full+abbrev, core concepts, source type like "chalktalk")
+  "title":    string,   // 2-6 words, standard medical terminology
+  "html":     string,   // self-contained HTML (a <style> block + content <div>), NO <html>/<head>/<body>
+  "keywords": string    // flat, comma-separated, lowercase tokens
 }
 
-HTML requirements:
+=== TITLE ===
+Concise, standard medical phrasing. Examples: "WHO Analgesic Ladder", "Inpatient Sleep Management", "AF Rate vs Rhythm Control", "Sepsis 6 Bundle", "Beta Blocker Comparison".
+
+=== HTML (the recreation) ===
+
+This is NOT a description of the image. This is a professionally designed infographic that faithfully represents every drug, dose, label, arrow, caveat, category, and case from the original. Design first, then transcribe content into that design.
+
+Hard rules:
 - All CSS inline in a single <style> tag, no external resources
-- White background, clean typography
-- DO NOT include a title or subtitle at the top — the doc already renders the title above. Start the visual directly with the first content element.
-- Dark colored header bars for section titles, light-background cards for side-by-side sections, styled tables with dark headers, colored accents (red for AVOID-type emphasis)
+- Start with a <style> block, then a content <div class="container">
+- DO NOT include a title or subtitle at the top — the Google Doc renders the title above the image
 - System font stack: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif
 - max-width: 750px; min 14px body text, 18px+ headings
-- Color reference: navy #1a3a5c, card fill #eef3f9, card border #c8d6e5, red text #8b2a2a, red bg #fceeee
+- White background, clean typography, generous whitespace
+- No <html>/<head>/<body> boilerplate
 
-Keyword rules:
-- INCLUDE: drug names (generic + brand), diagnoses (full + abbrev), core concepts, central procedures, distinctive context, source type
-- EXCLUDE: doses, long descriptive fragments, narrow abbreviations, image-caption paraphrases
+Design vocabulary to pick from:
+- **Dark colored header bars** for section names (small caps label above a bar, or bar with white text inside)
+- **Light-background card boxes** with subtle borders for side-by-side concepts
+- **Structured tables** with dark header rows for comparisons (drugs, pros/cons, rate vs rhythm, etc.)
+- **Colored emphasis cells**: red bg + red text for AVOID / danger, green for preferred, yellow for caution
+- **Arrow flows** (→ ⟶ ↓) for algorithms and dose escalation ladders
+- **Row labels** (Dose, Pro, Con, Mechanism) on the left of comparison tables
+- **Hierarchy** via font weight and color — not by font size alone
 
-If multiple images are provided, weave their content into a single polished visual (not just stacked).
+Approved palette (use these, not other colors):
+- Navy header:       #1a3a5c (text + backgrounds)
+- Card fill:         #eef3f9
+- Card border:       #c8d6e5
+- Alt row:           #f8f9fb or #f5f7fa
+- Red danger text:   #8b2a2a
+- Red danger bg:     #fceeee
+- Soft red bg:       #fcf5f5
+- Muted text:        #6b7c93 or #888888
+- Primary body:      #1a1a1a
 
-Return ONLY valid JSON. No markdown fences, no commentary.`;
+Content fidelity:
+- Transcribe every labeled item from the slide. If the slide shows 5 drugs and 3 rows of attributes, your table is 5×3.
+- Preserve original terminology (e.g. "Ok for L/K" means ok for liver/kidney — keep as written).
+- Preserve units and dose ranges verbatim.
+- If the slide uses ↓ or ↑ arrows, keep them.
+
+Multi-image inputs: WEAVE them into one coherent polished visual (shared sections, unified tables) rather than stacking them side-by-side.
+
+=== KEYWORDS (for Cmd+F search) ===
+
+Flat, comma-separated, lowercase. 8-15 tokens. Think back-of-book index terms, not caption paraphrase.
+
+Include:
+- Drug names — generic AND brand (e.g. suvorexant, belsomra)
+- Diagnoses — full name AND abbreviation (e.g. atrial fibrillation, afib)
+- Core 1-2 word concepts (e.g. insomnia, rate control, sleep hygiene)
+- Central procedures if relevant (e.g. ECG, echocardiogram)
+- Distinctive context (e.g. inpatient, geriatrics, icu)
+- Source type: one of chalktalk, slide, paper, diagram, mnemonic, flowchart, guideline
+
+Exclude:
+- Doses and dose ranges (belong in the image)
+- Long descriptive fragments
+- Narrow abbreviations (L/K, OOB, AMS)
+- Image caption paraphrases
+- Drug class descriptors unless the class IS the entry's topic
+
+=== OUTPUT ===
+
+Return ONLY the JSON object. No markdown fences. No commentary before or after.`;
 
 const PAPER_SYSTEM_PROMPT = `You are summarizing a medical journal article for a study notes Google Doc.
 
@@ -121,8 +174,8 @@ async function handlePolish(request, env, cors) {
   ];
 
   const resp = await callAnthropic(env.ANTHROPIC_API_KEY, {
-    model: ANTHROPIC_MODEL,
-    max_tokens: 4000,
+    model: MODEL_POLISH,
+    max_tokens: 6000,
     system: POLISH_SYSTEM_PROMPT,
     messages: [{ role: "user", content: userContent }],
   });
@@ -156,7 +209,7 @@ async function handlePaper(request, env, cors) {
   ];
 
   const resp = await callAnthropic(env.ANTHROPIC_API_KEY, {
-    model: ANTHROPIC_MODEL,
+    model: MODEL_PAPER,
     max_tokens: 2000,
     system: PAPER_SYSTEM_PROMPT,
     messages: [{ role: "user", content: userContent }],
