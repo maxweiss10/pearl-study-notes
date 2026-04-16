@@ -14,7 +14,7 @@
   <title>Pearl — Study Notes</title>
 
   <!-- Build version is bumped on every deploy by ./bump.sh to force cache invalidation -->
-  <script>window.PEARL_BUILD="20260416-193421";</script>
+  <script>window.PEARL_BUILD="20260416-194837";</script>
   <script>
     // Rewrite all asset URLs with the build version
     document.addEventListener("DOMContentLoaded", () => {});
@@ -108,7 +108,9 @@
   <!-- heic2any: desktop HEIC decoder fallback. On iPhone Safari, createImageBitmap decodes HEIC natively and this is bypassed. -->
   <script src="https://cdn.jsdelivr.net/npm/heic2any@0.0.4/dist/heic2any.min.js"></script>
   <script>
-    // Version-bust the site-owned scripts so iterations don't get stuck on old CDN caches
+    // Version-bust the site-owned scripts so iterations don't get stuck on old CDN caches.
+    // CRITICAL: dynamically-inserted scripts default to async=true which means they can execute
+    // out of order. Setting async=false preserves document order.
     (function () {
       var v = window.PEARL_BUILD || String(Date.now());
       var link = document.getElementById("pearl-style");
@@ -116,7 +118,7 @@
       function load(src) {
         var s = document.createElement("script");
         s.src = src + "?v=" + v;
-        s.defer = false;
+        s.async = false;   // preserve order: config.js must finish before app.js
         document.body.appendChild(s);
       }
       load("config.js");
