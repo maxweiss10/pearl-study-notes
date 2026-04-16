@@ -29,7 +29,6 @@ const diag = {
     lines.push(`Worker:  ${WORKER || "(unset)"}`);
     lines.push(`Doc:     ${DOC || "(unset)"}`);
     lines.push(`UA:      ${navigator.userAgent}`);
-    lines.push(`heic-to loaded:    ${!!getHeicToFn()}`);
     lines.push(`heic2any loaded:   ${typeof window.heic2any === "function"}`);
     lines.push(`html2canvas loaded: ${typeof window.html2canvas === "function"}`);
     lines.push(`Selected files (${state.selectedFiles.length}):`);
@@ -76,6 +75,7 @@ const el = {
   diagBody:    document.getElementById("diagBody"),
   diagCopy:    document.getElementById("diagCopy"),
   diagClose:   document.getElementById("diagClose"),
+  clearBtn:    document.getElementById("clearFilesBtn"),
 };
 
 // ── State ────────────────────────────────────────────────────────────────────
@@ -110,13 +110,9 @@ el.diagCopy.addEventListener("click", async () => {
   }
 });
 
-// Library-ready gate.
-// heic-to is the primary HEIC decoder; heic2any is the fallback. html2canvas is required.
+// Library-ready gate. html2canvas is required; heic2any is only needed for HEIC fallback on desktop.
 function librariesReady() {
-  const heicOk = (window.heicTo && typeof window.heicTo.heicTo === "function")
-              || typeof window.heicTo === "function"
-              || typeof window.heic2any === "function";
-  return heicOk && typeof window.html2canvas === "function";
+  return typeof window.html2canvas === "function";
 }
 (function waitForLibs() {
   if (librariesReady()) {
@@ -138,6 +134,15 @@ el.regenerate.addEventListener("click", onGenerate);
 el.dropZone.addEventListener("click", () => el.files.click());
 el.dropZone.addEventListener("keydown", (e) => {
   if (e.key === "Enter" || e.key === " ") { e.preventDefault(); el.files.click(); }
+});
+
+el.clearBtn.addEventListener("click", () => {
+  state.selectedFiles = [];
+  state.fileMeta = new Map();
+  el.files.value = "";
+  el.fileList.innerHTML = "";
+  el.clearBtn.classList.add("hidden");
+  resetPreview();
 });
 
 // Drag-and-drop
@@ -183,48 +188,48 @@ function onFilesChange() {
 }
 
 function handleDroppedFiles(fileList) {
-  if (state.isHandlingDrop) { diag.log("drop ignored (concurrency guard)"); return; }
-  state.isHandlingDrop = true;
-  try {
-    const raw = Array.from(fileList || []);
-    diag.log("drop received", { count: raw.length });
+  const raw = Array.from(fileList || []);
+  diag.log("drop received", { count: raw.length, names: raw.map((f) => f.name) });
 
-    // Loosened filter: keep anything that could plausibly be an image
-    const files = raw.filter((f) => {
-      if (f.type && f.type.startsWith("image/")) return true;
-      if (/\.(heic|heif|png|jpe?g|gif|webp|bmp|tiff?|avif)$/i.test(f.name)) return true;
-      // No extension/type but non-trivial size — keep and let conversion decide
-      if (!f.type && !/\./.test(f.name) && f.size > 1024) return true;
-      return false;
+  // Loosened filter: keep anything that could plausibly be an image
+  const accepted = raw.filter((f) => {
+    if (f.type && f.type.startsWith("image/")) return true;
+    if (/\.(heic|heif|png|jpe?g|gif|webp|bmp|tiff?|avif)$/i.test(f.name)) return true;
+    if (!f.type && !/\./.test(f.name) && f.size > 1024) return true;
+    return false;
+  });
+
+  if (!accepted.length) {
+    diag.log("drop filtered to 0 files", { rawNames: raw.map((f) => f.name) });
+    return;
+  }
+
+  // Additive: append to existing state, dedupe by name+size
+  const keySet = new Set(state.selectedFiles.map((f) => `${f.name}::${f.size}`));
+  const toAdd = accepted.filter((f) => !keySet.has(`${f.name}::${f.size}`));
+  state.selectedFiles = state.selectedFiles.concat(toAdd);
+
+  for (const f of toAdd) {
+    state.fileMeta.set(f, {
+      heicName: /\.(heic|heif)$/i.test(f.name || ""),
+      heicMime: f.type === "image/heic" || f.type === "image/heif",
     });
-
-    if (!files.length) {
-      diag.log("drop filtered to 0 files", { rawNames: raw.map((f) => f.name) });
-      return;
-    }
-
-    state.selectedFiles = files;
-    state.fileMeta = new Map();
-    for (const f of files) {
-      state.fileMeta.set(f, {
-        heicName: /\.(heic|heif)$/i.test(f.name || ""),
-        heicMime: f.type === "image/heic" || f.type === "image/heif",
-      });
-    }
-    diag.log("accepted files", { count: files.length, names: files.map((f) => f.name) });
-
-    // Run content-sniff in the background so the diagnostic panel has full info
-    files.forEach((f) => sniffHeic(f).then((sniff) => {
+    // Content-sniff in the background so the diag panel has full info
+    sniffHeic(f).then((sniff) => {
       const meta = state.fileMeta.get(f);
       if (meta) { meta.heicSniff = sniff.isHeic; meta.sniffHex = sniff.hex; }
-    }));
-
-    renderThumbnails();
-    resetPreview();
-  } finally {
-    // Release after a tick so bubbled duplicate events see the guard
-    setTimeout(() => { state.isHandlingDrop = false; }, 200);
+    });
   }
+
+  diag.log("accepted files (additive)", {
+    totalNow: state.selectedFiles.length,
+    newlyAdded: toAdd.length,
+    names: state.selectedFiles.map((f) => f.name),
+  });
+
+  renderThumbnails();
+  el.clearBtn.classList.toggle("hidden", state.selectedFiles.length === 0);
+  resetPreview();
 }
 
 // ── HEIC detection ────────────────────────────────────────────────────────────
@@ -612,87 +617,78 @@ async function workerPost(path, body) {
 
 const MAX_DIM = 1600;
 
-// Resolve the heic-to API regardless of how it was loaded (global or namespaced)
-function getHeicToFn() {
-  if (window.heicTo && typeof window.heicTo.heicTo === "function") return window.heicTo.heicTo;
-  if (typeof window.heicTo === "function") return window.heicTo;
-  return null;
-}
-
-async function decodeHeic(file) {
-  const errors = [];
-
-  // 1) Try heic-to (newer libheif, supports iPhone 13+ HDR HEIC)
-  const heicTo = getHeicToFn();
-  if (heicTo) {
-    try {
-      const blob = await heicTo({ blob: file, type: "image/jpeg", quality: 0.9 });
-      const out = Array.isArray(blob) ? blob[0] : blob;
-      diag.log("heic-to converted", { inSize: file.size, outSize: out.size });
-      return out;
-    } catch (err) {
-      diag.error("heic-to", err);
-      errors.push("heic-to: " + (err.message || err));
-    }
-  } else {
-    errors.push("heic-to: not loaded");
+async function decodeHeicFallback(file) {
+  if (typeof window.heic2any !== "function") {
+    throw new Error(
+      "This browser can't decode HEIC. Easy fix: open in iPhone Safari (HEIC works natively), " +
+      "or convert on macOS — in Finder, right-click the HEIC → Quick Actions → Convert Image → JPEG."
+    );
   }
-
-  // 2) Fallback: heic2any (older libheif)
-  if (typeof window.heic2any === "function") {
-    try {
-      const blob = await window.heic2any({ blob: file, toType: "image/jpeg", quality: 0.9 });
-      const out = Array.isArray(blob) ? blob[0] : blob;
-      diag.log("heic2any converted", { inSize: file.size, outSize: out.size });
-      return out;
-    } catch (err) {
-      diag.error("heic2any", err);
-      errors.push("heic2any: " + (err.message || err));
-    }
-  } else {
-    errors.push("heic2any: not loaded");
+  try {
+    const blob = await window.heic2any({ blob: file, toType: "image/jpeg", quality: 0.9 });
+    const out = Array.isArray(blob) ? blob[0] : blob;
+    diag.log("heic2any converted", { inSize: file.size, outSize: out.size });
+    return out;
+  } catch (err) {
+    diag.error("heic2any", err);
+    throw new Error(
+      "Could not decode this HEIC (desktop browsers have limited HEIC support). " +
+      "Easiest fix: in Finder, right-click the HEIC → Quick Actions → Convert Image → JPEG, then retry. " +
+      "Or use Pearl on your iPhone where HEIC works natively."
+    );
   }
-
-  // Everything failed
-  throw new Error(
-    "Could not decode HEIC. Tried: " + errors.join(" | ") +
-    ". iPhone fix: Settings → Camera → Formats → 'Most Compatible' (saves as JPEG)."
-  );
 }
 
 async function convertToPngBlob(originalFile) {
   diag.log("convertToPngBlob", { name: originalFile.name, size: originalFile.size, type: originalFile.type });
   let file = originalFile;
-
-  const heic = await isHeicAccurate(file);
-  diag.log("heic detection", { name: file.name, isHeic: heic });
-
-  if (heic) {
-    file = await decodeHeic(file);
-  }
-
   let width, height, source;
+
+  // Strategy 1: try native decode first. iPhone Safari decodes HEIC natively this way.
   try {
     const bitmap = await createImageBitmap(file);
     width  = bitmap.width;
     height = bitmap.height;
     source = bitmap;
-  } catch (e) {
-    const dataUrl = await new Promise((resolve, reject) => {
-      const r = new FileReader();
-      r.onload = () => resolve(r.result);
-      r.onerror = reject;
-      r.readAsDataURL(file);
-    });
-    const img = await new Promise((resolve, reject) => {
-      const i = new Image();
-      i.onload = () => resolve(i);
-      i.onerror = () => reject(new Error("Could not decode image — browser can't read this format"));
-      i.src = dataUrl;
-    });
-    width  = img.naturalWidth;
-    height = img.naturalHeight;
-    source = img;
+    diag.log("native createImageBitmap succeeded");
+  } catch (nativeErr) {
+    diag.log("native decode failed", { error: nativeErr.message });
+
+    // Strategy 2: if it's a HEIC, try heic2any fallback (desktop path)
+    const isHeic = await isHeicAccurate(file);
+    if (isHeic) {
+      file = await decodeHeicFallback(file);
+      try {
+        const bitmap = await createImageBitmap(file);
+        width  = bitmap.width;
+        height = bitmap.height;
+        source = bitmap;
+      } catch (err2) {
+        diag.error("post-heic-fallback createImageBitmap", err2);
+        throw new Error("Decoded HEIC but still can't render it.");
+      }
+    } else {
+      // Strategy 3: try <img> tag (can decode some formats createImageBitmap rejects)
+      try {
+        const dataUrl = await new Promise((resolve, reject) => {
+          const r = new FileReader();
+          r.onload = () => resolve(r.result);
+          r.onerror = reject;
+          r.readAsDataURL(file);
+        });
+        const img = await new Promise((resolve, reject) => {
+          const i = new Image();
+          i.onload = () => resolve(i);
+          i.onerror = () => reject(new Error("Could not decode image — try a JPG or PNG"));
+          i.src = dataUrl;
+        });
+        width  = img.naturalWidth;
+        height = img.naturalHeight;
+        source = img;
+      } catch (imgErr) {
+        throw new Error("Could not decode image — try a JPG or PNG");
+      }
+    }
   }
 
   const longEdge = Math.max(width, height);

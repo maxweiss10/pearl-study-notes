@@ -80,6 +80,19 @@ input, select, textarea { font-size: 16px; }
   margin-bottom: 14px;
 }
 .field:last-child { margin-bottom: 0; }
+.field-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 6px;
+}
+.field-header .label { margin-bottom: 0; }
+.field-header .link-btn {
+  font-size: 12px;
+  color: var(--muted);
+  padding: 2px 8px;
+}
+.field-header .link-btn:hover { color: #8b2a2a; }
 
 .label {
   display: block;
