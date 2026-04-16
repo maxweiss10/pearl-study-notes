@@ -29,6 +29,7 @@ const diag = {
     lines.push(`Worker:  ${WORKER || "(unset)"}`);
     lines.push(`Doc:     ${DOC || "(unset)"}`);
     lines.push(`UA:      ${navigator.userAgent}`);
+    lines.push(`heic-to loaded:    ${!!getHeicToFn()}`);
     lines.push(`heic2any loaded:   ${typeof window.heic2any === "function"}`);
     lines.push(`html2canvas loaded: ${typeof window.html2canvas === "function"}`);
     lines.push(`Selected files (${state.selectedFiles.length}):`);
@@ -109,9 +110,13 @@ el.diagCopy.addEventListener("click", async () => {
   }
 });
 
-// Library-ready gate
+// Library-ready gate.
+// heic-to is the primary HEIC decoder; heic2any is the fallback. html2canvas is required.
 function librariesReady() {
-  return typeof window.heic2any === "function" && typeof window.html2canvas === "function";
+  const heicOk = (window.heicTo && typeof window.heicTo.heicTo === "function")
+              || typeof window.heicTo === "function"
+              || typeof window.heic2any === "function";
+  return heicOk && typeof window.html2canvas === "function";
 }
 (function waitForLibs() {
   if (librariesReady()) {
@@ -607,6 +612,54 @@ async function workerPost(path, body) {
 
 const MAX_DIM = 1600;
 
+// Resolve the heic-to API regardless of how it was loaded (global or namespaced)
+function getHeicToFn() {
+  if (window.heicTo && typeof window.heicTo.heicTo === "function") return window.heicTo.heicTo;
+  if (typeof window.heicTo === "function") return window.heicTo;
+  return null;
+}
+
+async function decodeHeic(file) {
+  const errors = [];
+
+  // 1) Try heic-to (newer libheif, supports iPhone 13+ HDR HEIC)
+  const heicTo = getHeicToFn();
+  if (heicTo) {
+    try {
+      const blob = await heicTo({ blob: file, type: "image/jpeg", quality: 0.9 });
+      const out = Array.isArray(blob) ? blob[0] : blob;
+      diag.log("heic-to converted", { inSize: file.size, outSize: out.size });
+      return out;
+    } catch (err) {
+      diag.error("heic-to", err);
+      errors.push("heic-to: " + (err.message || err));
+    }
+  } else {
+    errors.push("heic-to: not loaded");
+  }
+
+  // 2) Fallback: heic2any (older libheif)
+  if (typeof window.heic2any === "function") {
+    try {
+      const blob = await window.heic2any({ blob: file, toType: "image/jpeg", quality: 0.9 });
+      const out = Array.isArray(blob) ? blob[0] : blob;
+      diag.log("heic2any converted", { inSize: file.size, outSize: out.size });
+      return out;
+    } catch (err) {
+      diag.error("heic2any", err);
+      errors.push("heic2any: " + (err.message || err));
+    }
+  } else {
+    errors.push("heic2any: not loaded");
+  }
+
+  // Everything failed
+  throw new Error(
+    "Could not decode HEIC. Tried: " + errors.join(" | ") +
+    ". iPhone fix: Settings → Camera → Formats → 'Most Compatible' (saves as JPEG)."
+  );
+}
+
 async function convertToPngBlob(originalFile) {
   diag.log("convertToPngBlob", { name: originalFile.name, size: originalFile.size, type: originalFile.type });
   let file = originalFile;
@@ -615,17 +668,7 @@ async function convertToPngBlob(originalFile) {
   diag.log("heic detection", { name: file.name, isHeic: heic });
 
   if (heic) {
-    if (typeof heic2any !== "function") {
-      throw new Error("HEIC converter not loaded (heic2any). Refresh the page.");
-    }
-    try {
-      const jpegBlob = await heic2any({ blob: file, toType: "image/jpeg", quality: 0.9 });
-      file = Array.isArray(jpegBlob) ? jpegBlob[0] : jpegBlob;
-      diag.log("heic2any converted", { size: file.size });
-    } catch (err) {
-      diag.error("heic2any", err);
-      throw new Error("Could not decode HEIC: " + (err.message || err));
-    }
+    file = await decodeHeic(file);
   }
 
   let width, height, source;
