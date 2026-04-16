@@ -1,0 +1,11 @@
+name = "pearl-study-notes"
+main = "src/index.js"
+compatibility_date = "2024-11-01"
+
+# Secrets (set via `wrangler secret put NAME`):
+#   ANTHROPIC_API_KEY         — your Anthropic API key (sk-ant-...)
+#   STUDY_NOTES_SECRET        — same shared secret stored in the Apps Script "SECRET" script property
+#   STUDY_NOTES_WEBAPP_URL    — your Apps Script deployment URL
+#   CLIENT_TOKEN              — any string; frontend sends this as X-Client-Token to keep random bots out
+
+# Optional: restrict CORS to your Pages domain once deployed by editing src/index.js.

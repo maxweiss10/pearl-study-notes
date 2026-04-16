@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="theme-color" content="#1a3a5c" />
+  <title>Pearl — Study Notes</title>
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+  <header class="topbar">
+    <h1>📓 Pearl</h1>
+    <a id="openDoc" href="#" target="_blank" rel="noopener">Open doc ↗</a>
+  </header>
+
+  <main class="app">
+
+    <section class="card">
+      <label class="field">
+        <span class="label">Mode</span>
+        <select id="mode">
+          <option value="polished-single">Polished single image</option>
+          <option value="raw-single">Raw single image</option>
+          <option value="each">Multiple images → separate entries</option>
+          <option value="merge-polished">Multiple images → one merged polished entry</option>
+          <option value="merge-raw">Multiple images → one stacked raw entry</option>
+          <option value="paper">Paper URL → plain-text entry</option>
+        </select>
+      </label>
+
+      <div id="fileField" class="field">
+        <span class="label">Images</span>
+        <label class="filedrop">
+          <input type="file" id="files" accept="image/*,.heic" multiple />
+          <span class="filedrop-hint">Tap or drop images here</span>
+        </label>
+        <div id="fileList" class="filelist"></div>
+      </div>
+
+      <label id="urlField" class="field hidden">
+        <span class="label">Paper URL</span>
+        <input type="url" id="urlInput" placeholder="https://pubmed.ncbi.nlm.nih.gov/..." />
+      </label>
+    </section>
+
+    <section id="previewSection" class="card hidden">
+      <div class="preview-header">
+        <span class="label">Preview</span>
+        <button id="regenerateBtn" class="link-btn" type="button" title="Re-generate">↻</button>
+      </div>
+      <div id="preview" class="preview"></div>
+      <label class="field">
+        <span class="label">Title</span>
+        <input type="text" id="titleInput" />
+      </label>
+      <label class="field">
+        <span class="label">Keywords</span>
+        <input type="text" id="keywordsInput" />
+      </label>
+      <label id="bodyField" class="field hidden">
+        <span class="label">Body text</span>
+        <textarea id="bodyInput" rows="6"></textarea>
+      </label>
+    </section>
+
+    <section class="actions">
+      <button id="generateBtn" class="primary">Generate</button>
+      <button id="submitBtn" class="primary hidden">Add to Pearl</button>
+      <div id="status" class="status"></div>
+    </section>
+
+  </main>
+
+  <footer class="footer">
+    <span id="config-notice"></span>
+  </footer>
+
+  <!-- html2canvas via CDN -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js" defer></script>
+  <script src="config.js" defer></script>
+  <script src="app.js" defer></script>
+</body>
+</html>
