@@ -412,19 +412,51 @@ async function workerPost(path, body) {
 // works because the browser side only needs to display a thumbnail, and the Apps Script
 // path handles image bytes directly). For robust HEIC support, we rely on the browser
 // to decode HEIC directly (iOS Safari does this since 17).
+// Target size for uploaded images — balances quality with payload speed.
+// iPhone photos are often 4000px+; 1600 on the long edge is still sharp in a Google Doc.
+const MAX_DIM = 1600;
+
 async function convertToPngBlob(file) {
-  // If the file is already a web-friendly image, render through canvas to ensure PNG.
-  const bitmap = await createImageBitmap(file).catch(() => null);
-  if (!bitmap) {
-    // Fallback: just return the raw file as-is (Apps Script may reject HEIC).
-    return file;
+  let width, height, source;
+
+  // Modern path: createImageBitmap works on iOS 15+ for JPG/PNG and on iOS 17+ for HEIC
+  try {
+    const bitmap = await createImageBitmap(file);
+    width  = bitmap.width;
+    height = bitmap.height;
+    source = bitmap;
+  } catch (e) {
+    // Fallback: use Image() decode (for formats createImageBitmap can't handle)
+    const dataUrl = await new Promise((resolve, reject) => {
+      const r = new FileReader();
+      r.onload = () => resolve(r.result);
+      r.onerror = reject;
+      r.readAsDataURL(file);
+    });
+    const img = await new Promise((resolve, reject) => {
+      const i = new Image();
+      i.onload = () => resolve(i);
+      i.onerror = () => reject(new Error("Could not decode image — try a JPG/PNG"));
+      i.src = dataUrl;
+    });
+    width  = img.naturalWidth;
+    height = img.naturalHeight;
+    source = img;
   }
+
+  // Downscale to MAX_DIM on the long edge
+  const longEdge = Math.max(width, height);
+  if (longEdge > MAX_DIM) {
+    const scale = MAX_DIM / longEdge;
+    width  = Math.round(width * scale);
+    height = Math.round(height * scale);
+  }
+
   const canvas = document.createElement("canvas");
-  canvas.width  = bitmap.width;
-  canvas.height = bitmap.height;
-  const ctx = canvas.getContext("2d");
-  ctx.drawImage(bitmap, 0, 0);
-  return await new Promise((resolve) => canvas.toBlob(resolve, "image/png", 0.95));
+  canvas.width  = width;
+  canvas.height = height;
+  canvas.getContext("2d").drawImage(source, 0, 0, width, height);
+  return await new Promise((resolve) => canvas.toBlob(resolve, "image/png", 0.92));
 }
 
 function blobToImage(blob) {

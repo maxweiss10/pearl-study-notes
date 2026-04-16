@@ -12,7 +12,7 @@
   --shadow: 0 1px 3px rgba(26, 58, 92, 0.08), 0 4px 12px rgba(26, 58, 92, 0.06);
 }
 
-* { box-sizing: border-box; }
+* { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
 
 html, body {
   margin: 0;
@@ -21,12 +21,20 @@ html, body {
   background: var(--bg);
   color: var(--text);
   -webkit-font-smoothing: antialiased;
+  /* Prevent iOS Safari rubber-band revealing bg below */
+  min-height: 100vh;
+  min-height: 100dvh;
 }
+
+/* iOS: <input> with font-size < 16px triggers auto-zoom on focus */
+input, select, textarea { font-size: 16px; }
 
 .topbar {
   background: var(--navy);
   color: #fff;
-  padding: 14px 20px;
+  padding: calc(14px + env(safe-area-inset-top)) 20px 14px;
+  padding-left: calc(20px + env(safe-area-inset-left));
+  padding-right: calc(20px + env(safe-area-inset-right));
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -174,9 +182,14 @@ button.primary {
   border-radius: 10px;
   cursor: pointer;
   transition: background 0.15s, transform 0.05s;
+  /* Avoid 300ms tap delay on iOS + no double-tap zoom on buttons */
+  touch-action: manipulation;
+  min-height: 48px;
+  -webkit-appearance: none;
+  appearance: none;
 }
 button.primary:hover:not(:disabled) { background: var(--navy-light); }
-button.primary:active:not(:disabled) { transform: translateY(1px); }
+button.primary:active:not(:disabled) { transform: translateY(1px); background: var(--navy-light); }
 button.primary:disabled { opacity: 0.5; cursor: not-allowed; }
 
 .link-btn {
