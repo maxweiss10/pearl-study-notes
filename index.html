@@ -14,7 +14,7 @@
   <title>Pearl — Study Notes</title>
 
   <!-- Build version is bumped on every deploy by ./bump.sh to force cache invalidation -->
-  <script>window.PEARL_BUILD="20260416-192527";</script>
+  <script>window.PEARL_BUILD="20260416-192817";</script>
   <script>
     // Rewrite all asset URLs with the build version
     document.addEventListener("DOMContentLoaded", () => {});
@@ -102,6 +102,9 @@
 
   <!-- Load libs BEFORE app.js so they're ready when ready-gate checks -->
   <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+  <!-- heic-to: newer libheif-based HEIC decoder, supports iPhone 13+ HDR variants -->
+  <script src="https://cdn.jsdelivr.net/npm/heic-to@1.1.14/dist/csp/heic-to.min.js"></script>
+  <!-- Keep heic2any as a last-resort fallback -->
   <script src="https://cdn.jsdelivr.net/npm/heic2any@0.0.4/dist/heic2any.min.js"></script>
   <script>
     // Version-bust the site-owned scripts so iterations don't get stuck on old CDN caches
