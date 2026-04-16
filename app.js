@@ -49,6 +49,46 @@ el.generateBtn.addEventListener("click", onGenerate);
 el.submitBtn.addEventListener("click", onSubmit);
 el.regenerate.addEventListener("click", onGenerate);
 
+// Drag-and-drop wiring on the .filedrop label
+const dropZone = document.querySelector(".filedrop");
+if (dropZone) {
+  ["dragenter", "dragover"].forEach((evt) =>
+    dropZone.addEventListener(evt, (e) => {
+      e.preventDefault();
+      e.stopPropagation();
+      dropZone.classList.add("dragover");
+    })
+  );
+  ["dragleave", "dragend"].forEach((evt) =>
+    dropZone.addEventListener(evt, (e) => {
+      e.preventDefault();
+      e.stopPropagation();
+      dropZone.classList.remove("dragover");
+    })
+  );
+  dropZone.addEventListener("drop", (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    dropZone.classList.remove("dragover");
+    const files = Array.from(e.dataTransfer?.files || []).filter(
+      (f) => f.type.startsWith("image/") || /\.heic$/i.test(f.name)
+    );
+    if (!files.length) return;
+
+    // Assign to the hidden <input> via DataTransfer so onFilesChange() works
+    const dt = new DataTransfer();
+    for (const f of files) dt.items.add(f);
+    el.files.files = dt.files;
+    el.files.dispatchEvent(new Event("change"));
+  });
+}
+
+// Also allow dropping anywhere on the page for convenience (prevents browser
+// from navigating to the image if you miss the drop target)
+["dragover", "drop"].forEach((evt) =>
+  window.addEventListener(evt, (e) => e.preventDefault())
+);
+
 onModeChange();
 
 // ── Mode switching ───────────────────────────────────────────────────────────
@@ -56,11 +96,11 @@ function onModeChange() {
   const mode = el.mode.value;
   const needsFiles = mode !== "paper";
   const needsUrl   = mode === "paper";
-  const multi      = mode === "each" || mode === "merge-polished" || mode === "merge-raw";
 
   el.fileField.classList.toggle("hidden", !needsFiles);
   el.urlField.classList.toggle("hidden", !needsUrl);
-  el.files.toggleAttribute("multiple", multi);
+  // Always allow multiple files — the mode decides what to do with them at Generate time
+  el.files.setAttribute("multiple", "");
 
   // Reset preview when mode changes
   resetPreview();
@@ -121,7 +161,14 @@ async function onGenerate() {
 async function prepPolished(isMerge) {
   if (!state.selectedFiles.length) throw new Error("Pick at least one image");
   if (!isMerge && state.selectedFiles.length > 1) {
-    throw new Error("Polished single mode takes 1 image. Switch to 'merge polished' for multiple.");
+    // Auto-switch to a multi mode — ask the user which flavor
+    const choice = confirm(
+      `${state.selectedFiles.length} images selected. OK = merge into one polished entry, Cancel = one polished entry per image.`
+    );
+    el.mode.value = choice ? "merge-polished" : "each";
+    onModeChange();
+    // re-trigger generate with the new mode
+    return choice ? prepPolished(true) : prepEach();
   }
 
   const images = await Promise.all(state.selectedFiles.map(async (f) => {
@@ -153,7 +200,13 @@ async function prepPolished(isMerge) {
 }
 
 async function prepRawSingle() {
-  if (state.selectedFiles.length !== 1) throw new Error("Raw single needs exactly 1 image");
+  if (state.selectedFiles.length === 0) throw new Error("Pick an image");
+  if (state.selectedFiles.length > 1) {
+    // Auto-switch to merge-raw (stacked) for multiple raw photos
+    el.mode.value = "merge-raw";
+    onModeChange();
+    return prepMergeRaw();
+  }
   const f = state.selectedFiles[0];
   const pngBlob = await convertToPngBlob(f);
   const pngB64  = await blobToBase64(pngBlob);

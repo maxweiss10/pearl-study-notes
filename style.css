@@ -115,6 +115,10 @@ select:focus, input:focus, textarea:focus {
   transition: border-color 0.15s, background 0.15s;
 }
 .filedrop:hover { border-color: var(--navy); }
+.filedrop.dragover {
+  border-color: var(--navy);
+  background: #dbe5f2;
+}
 .filedrop input[type="file"] { display: none; }
 .filedrop-hint { color: var(--muted); font-size: 14px; }
 
