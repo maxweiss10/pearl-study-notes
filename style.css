@@ -121,14 +121,15 @@ select:focus, input:focus, textarea:focus {
   background: var(--card);
   cursor: pointer;
   transition: border-color 0.15s, background 0.15s;
+  user-select: none;
+  -webkit-user-select: none;
 }
-.filedrop:hover { border-color: var(--navy); }
+.filedrop:hover, .filedrop:focus { border-color: var(--navy); outline: none; }
 .filedrop.dragover {
   border-color: var(--navy);
   background: #dbe5f2;
 }
-.filedrop input[type="file"] { display: none; }
-.filedrop-hint { color: var(--muted); font-size: 14px; }
+.filedrop-hint { color: var(--muted); font-size: 14px; pointer-events: none; }
 
 .filelist {
   margin-top: 10px;

@@ -12,6 +12,7 @@ const el = {
   mode:        document.getElementById("mode"),
   fileField:   document.getElementById("fileField"),
   files:       document.getElementById("files"),
+  dropZone:    document.getElementById("dropZone"),
   fileList:    document.getElementById("fileList"),
   urlField:    document.getElementById("urlField"),
   urlInput:    document.getElementById("urlInput"),
@@ -49,44 +50,50 @@ el.generateBtn.addEventListener("click", onGenerate);
 el.submitBtn.addEventListener("click", onSubmit);
 el.regenerate.addEventListener("click", onGenerate);
 
-// Drag-and-drop wiring on the .filedrop label
-const dropZone = document.querySelector(".filedrop");
-if (dropZone) {
-  ["dragenter", "dragover"].forEach((evt) =>
-    dropZone.addEventListener(evt, (e) => {
-      e.preventDefault();
-      e.stopPropagation();
-      dropZone.classList.add("dragover");
-    })
-  );
-  ["dragleave", "dragend"].forEach((evt) =>
-    dropZone.addEventListener(evt, (e) => {
-      e.preventDefault();
-      e.stopPropagation();
-      dropZone.classList.remove("dragover");
-    })
-  );
-  dropZone.addEventListener("drop", (e) => {
-    e.preventDefault();
-    e.stopPropagation();
-    dropZone.classList.remove("dragover");
-    const files = Array.from(e.dataTransfer?.files || []).filter(
-      (f) => f.type.startsWith("image/") || /\.heic$/i.test(f.name)
-    );
-    if (!files.length) return;
+// Tap the drop zone → open the file picker
+el.dropZone.addEventListener("click", () => el.files.click());
+el.dropZone.addEventListener("keydown", (e) => {
+  if (e.key === "Enter" || e.key === " ") { e.preventDefault(); el.files.click(); }
+});
 
-    // Assign to the hidden <input> via DataTransfer so onFilesChange() works
-    const dt = new DataTransfer();
-    for (const f of files) dt.items.add(f);
-    el.files.files = dt.files;
-    el.files.dispatchEvent(new Event("change"));
-  });
+// Drag-and-drop wiring — on the div (no <label>/input interference)
+function handleDroppedFiles(fileList) {
+  const files = Array.from(fileList || []).filter(
+    (f) => f.type.startsWith("image/") || /\.(heic|png|jpe?g|gif|webp)$/i.test(f.name)
+  );
+  if (!files.length) return;
+  state.selectedFiles = files;
+  renderThumbnails();
+  resetPreview();
 }
 
-// Also allow dropping anywhere on the page for convenience (prevents browser
-// from navigating to the image if you miss the drop target)
+["dragenter", "dragover"].forEach((evt) =>
+  el.dropZone.addEventListener(evt, (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    el.dropZone.classList.add("dragover");
+  })
+);
+["dragleave", "dragend"].forEach((evt) =>
+  el.dropZone.addEventListener(evt, (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    el.dropZone.classList.remove("dragover");
+  })
+);
+el.dropZone.addEventListener("drop", (e) => {
+  e.preventDefault();
+  e.stopPropagation();
+  el.dropZone.classList.remove("dragover");
+  handleDroppedFiles(e.dataTransfer?.files);
+});
+
+// Prevent the browser from opening a dropped image if user misses the drop zone
 ["dragover", "drop"].forEach((evt) =>
-  window.addEventListener(evt, (e) => e.preventDefault())
+  window.addEventListener(evt, (e) => {
+    // Only preventDefault if drop is outside our drop zone, to avoid blocking the zone's drop
+    if (!el.dropZone.contains(e.target)) e.preventDefault();
+  })
 );
 
 onModeChange();
@@ -108,9 +115,14 @@ function onModeChange() {
 
 function onFilesChange() {
   state.selectedFiles = Array.from(el.files.files || []);
+  renderThumbnails();
+  resetPreview();
+}
+
+function renderThumbnails() {
   el.fileList.innerHTML = "";
   for (const f of state.selectedFiles) {
-    if (!f.type.startsWith("image/") && !/\.heic$/i.test(f.name)) continue;
+    if (!f.type.startsWith("image/") && !/\.(heic|png|jpe?g|gif|webp)$/i.test(f.name)) continue;
     const img = document.createElement("img");
     img.className = "thumb";
     img.alt = f.name;
@@ -119,7 +131,6 @@ function onFilesChange() {
     reader.readAsDataURL(f);
     el.fileList.appendChild(img);
   }
-  resetPreview();
 }
 
 function resetPreview() {

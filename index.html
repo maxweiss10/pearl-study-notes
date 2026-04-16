@@ -34,10 +34,10 @@
 
       <div id="fileField" class="field">
         <span class="label">Images</span>
-        <label class="filedrop">
-          <input type="file" id="files" accept="image/*,.heic,.HEIC" multiple />
+        <div id="dropZone" class="filedrop" tabindex="0" role="button" aria-label="Pick or drop images">
           <span class="filedrop-hint">Tap to pick (or drag here on desktop)</span>
-        </label>
+        </div>
+        <input type="file" id="files" accept="image/*,.heic,.HEIC" multiple hidden />
         <div id="fileList" class="filelist"></div>
       </div>
 
