@@ -122,7 +122,18 @@ function onFilesChange() {
 function renderThumbnails() {
   el.fileList.innerHTML = "";
   for (const f of state.selectedFiles) {
-    if (!f.type.startsWith("image/") && !/\.(heic|png|jpe?g|gif|webp)$/i.test(f.name)) continue;
+    if (!f.type.startsWith("image/") && !/\.(heic|heif|png|jpe?g|gif|webp)$/i.test(f.name)) continue;
+
+    // HEIC can't be rendered directly in browsers — show a filename chip instead of a broken <img>
+    if (isHeic(f)) {
+      const chip = document.createElement("div");
+      chip.className = "thumb filename-chip";
+      chip.textContent = f.name.length > 18 ? f.name.slice(0, 15) + "…" : f.name;
+      chip.title = f.name;
+      el.fileList.appendChild(chip);
+      continue;
+    }
+
     const img = document.createElement("img");
     img.className = "thumb";
     img.alt = f.name;
@@ -427,17 +438,35 @@ async function workerPost(path, body) {
 // iPhone photos are often 4000px+; 1600 on the long edge is still sharp in a Google Doc.
 const MAX_DIM = 1600;
 
-async function convertToPngBlob(file) {
+function isHeic(file) {
+  return /\.heic$/i.test(file.name) || /\.heif$/i.test(file.name) || file.type === "image/heic" || file.type === "image/heif";
+}
+
+async function convertToPngBlob(originalFile) {
+  // HEIC: desktop Chrome/Safari can't decode these natively. Convert via heic2any first.
+  let file = originalFile;
+  if (isHeic(file)) {
+    if (typeof heic2any !== "function") {
+      throw new Error("HEIC converter not loaded — check your internet connection and reload.");
+    }
+    try {
+      const jpegBlob = await heic2any({ blob: file, toType: "image/jpeg", quality: 0.9 });
+      file = Array.isArray(jpegBlob) ? jpegBlob[0] : jpegBlob;
+    } catch (err) {
+      throw new Error("Could not decode HEIC: " + (err.message || err));
+    }
+  }
+
   let width, height, source;
 
-  // Modern path: createImageBitmap works on iOS 15+ for JPG/PNG and on iOS 17+ for HEIC
+  // Modern path: createImageBitmap works on most browsers for JPG/PNG/WebP
   try {
     const bitmap = await createImageBitmap(file);
     width  = bitmap.width;
     height = bitmap.height;
     source = bitmap;
   } catch (e) {
-    // Fallback: use Image() decode (for formats createImageBitmap can't handle)
+    // Fallback: use Image() decode
     const dataUrl = await new Promise((resolve, reject) => {
       const r = new FileReader();
       r.onload = () => resolve(r.result);
