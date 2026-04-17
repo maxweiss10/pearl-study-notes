@@ -120,31 +120,28 @@ Exclude:
 
 Return ONLY the JSON object. No markdown fences, no commentary.`;
 
-const PAPER_SYSTEM_PROMPT = `You are summarizing a medical journal article for a study notes Google Doc.
+const PAPER_SYSTEM_PROMPT = `You are labeling a medical journal article for a study notes Google Doc.
 
 Given the article's full text or abstract (and possibly the user's own takeaway note), produce a JSON object with exactly these fields:
 
 {
   "title":    string (short paper name or topic, e.g. "PARADIGM-HF: Sacubitril vs Enalapril", "CRASH-2: TXA in Trauma"),
-  "bodyText": string (2-4 short paragraphs separated by blank lines),
+  "bodyText": string,
   "keywords": string (comma-separated, lowercase, 8-15 tight tokens including drug/device names, conditions, trial acronym, "paper")
 }
 
 === bodyText rules ===
 
-If the user provided their own takeaway note, preserve it VERBATIM as the first paragraph. Then add supporting paragraphs derived from the article:
-  Design: <one sentence — n, setting, comparator, endpoint>.
-  <blank line>
-  Takeaway: <why it matters clinically, one sentence>.
+**If the user provided a takeaway note**: bodyText is EXACTLY their note, verbatim — nothing else. No Design paragraph. No Takeaway paragraph. No rewording, no additions, no introduction, no closing. Just their text. Period.
 
-If the user did NOT provide a takeaway note, use this default structure:
+**If the user did NOT provide a takeaway note** (empty or missing): produce a concise 3-paragraph summary:
   Main finding: <one sentence>.
   <blank line>
   Design: <one sentence — n, setting, comparator, endpoint>.
   <blank line>
   Takeaway: <why it matters clinically, one sentence>.
 
-Keep it terse. The user's personal note is sacred — do not paraphrase or "improve" it.
+Title and keywords are always AI-generated from the article regardless of whether a user note is provided.
 
 Return ONLY valid JSON. No markdown fences.`;
 
@@ -266,8 +263,10 @@ async function handlePaper(request, env, cors) {
     messages: [{ role: "user", content: userContent }],
   });
 
-  const parsed = extractJson(resp);
-  return json(parsed, cors);
+  const parsedResp = extractJson(resp);
+  // Enforce: if user provided a note, bodyText is EXACTLY that note — no AI-generated paragraphs appended.
+  if (userNotes) parsedResp.bodyText = userNotes;
+  return json(parsedResp, cors);
 }
 
 // ── /submit ───────────────────────────────────────────────────────────────────
