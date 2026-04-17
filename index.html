@@ -14,7 +14,7 @@
   <title>Pearl — Study Notes</title>
 
   <!-- Build version is bumped on every deploy by ./bump.sh to force cache invalidation -->
-  <script>window.PEARL_BUILD="20260416-195719";</script>
+  <script>window.PEARL_BUILD="20260416-201312";</script>
   <script>
     // Rewrite all asset URLs with the build version
     document.addEventListener("DOMContentLoaded", () => {});
@@ -57,6 +57,10 @@
       <label id="urlField" class="field hidden">
         <span class="label">Paper URL</span>
         <input type="url" id="urlInput" placeholder="https://pubmed.ncbi.nlm.nih.gov/..." />
+      </label>
+      <label id="paperNotesField" class="field hidden">
+        <span class="label">Your takeaway <span class="label-hint">(optional)</span></span>
+        <textarea id="paperNotesInput" rows="4" placeholder="The main finding you care about, key quote, or your own note — will be included verbatim in the entry."></textarea>
       </label>
     </section>
 
