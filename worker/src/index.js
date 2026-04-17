@@ -34,6 +34,9 @@ Hard rules:
 - max-width: 750px; min 14px body text, 18px+ headings
 - White background, clean typography, generous whitespace
 - No <html>/<head>/<body> boilerplate
+- **NEVER use rotated, vertical, or sideways text.** No \`transform: rotate(...)\`, no \`writing-mode: vertical-*\`, no text with \`-webkit-text-orientation\`. These render upside-down or unreadable in the PNG export.
+  - If the original slide has a vertical axis label like "increasing strength" or "intensity ↑", replace it with a **normal horizontal label above the column** (e.g. a small caps header "↓ INCREASING STRENGTH") or with a side column of arrows (↑ ↓ → ←) that are single characters — never rotated blocks of text.
+- If a card or cell has no written content in the original, omit it — do not emit an empty box. Every rendered box must contain readable text.
 
 Design vocabulary to pick from:
 - **Dark colored header bars** for section names (small caps label above a bar, or bar with white text inside)
