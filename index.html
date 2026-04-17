@@ -14,7 +14,7 @@
   <title>Pearl — Study Notes</title>
 
   <!-- Build version is bumped on every deploy by ./bump.sh to force cache invalidation -->
-  <script>window.PEARL_BUILD="20260416-201312";</script>
+  <script>window.PEARL_BUILD="20260416-202123";</script>
   <script>
     // Rewrite all asset URLs with the build version
     document.addEventListener("DOMContentLoaded", () => {});
@@ -47,8 +47,13 @@
           <span class="label">Images</span>
           <button id="clearFilesBtn" type="button" class="link-btn hidden" title="Clear all">✕ Clear</button>
         </div>
-        <div id="dropZone" class="filedrop" tabindex="0" role="button" aria-label="Pick or drop images">
-          <span class="filedrop-hint">Tap to pick (or drag here on desktop)</span>
+        <div class="input-row">
+          <div id="dropZone" class="filedrop" tabindex="0" role="button" aria-label="Pick or drop images">
+            <span class="filedrop-hint">Tap to pick · drag · paste</span>
+          </div>
+          <div id="pasteZone" class="pastezone" tabindex="0" role="button" aria-label="Paste image here" title="Click, then Cmd+V">
+            <span class="pastezone-hint">📋<br/>Paste</span>
+          </div>
         </div>
         <input type="file" id="files" accept="image/*,.heic,.HEIC,.heif,.HEIF" multiple hidden />
         <div id="fileList" class="filelist"></div>
