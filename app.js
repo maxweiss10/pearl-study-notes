@@ -58,6 +58,8 @@ const el = {
   fileList:    document.getElementById("fileList"),
   urlField:    document.getElementById("urlField"),
   urlInput:    document.getElementById("urlInput"),
+  paperNotesField: document.getElementById("paperNotesField"),
+  paperNotesInput: document.getElementById("paperNotesInput"),
   preview:     document.getElementById("preview"),
   previewSec:  document.getElementById("previewSection"),
   title:       document.getElementById("titleInput"),
@@ -172,6 +174,24 @@ el.dropZone.addEventListener("drop", (e) => {
   })
 );
 
+// Paste images from clipboard anywhere on the page (except when typing in text inputs)
+window.addEventListener("paste", (e) => {
+  const items = Array.from(e.clipboardData?.items || []);
+  const imageFiles = items
+    .filter((i) => i.kind === "file" && i.type.startsWith("image/"))
+    .map((i) => i.getAsFile())
+    .filter(Boolean);
+  if (!imageFiles.length) return;
+  // If paste target is a text input/textarea (other than the URL field), let the text paste happen
+  const t = e.target;
+  const isTextInput = t && (t.tagName === "TEXTAREA" ||
+    (t.tagName === "INPUT" && t.type !== "url" && t.id !== "urlInput"));
+  if (isTextInput) return;
+  e.preventDefault();
+  diag.log("paste image(s) received", { count: imageFiles.length });
+  handleDroppedFiles(imageFiles);
+});
+
 onModeChange();
 
 // ── Mode ──────────────────────────────────────────────────────────────────────
@@ -179,6 +199,7 @@ function onModeChange() {
   const mode = el.mode.value;
   el.fileField.classList.toggle("hidden", mode === "paper");
   el.urlField.classList.toggle("hidden", mode !== "paper");
+  el.paperNotesField.classList.toggle("hidden", mode !== "paper");
   el.files.setAttribute("multiple", "");
   resetPreview();
 }
@@ -532,9 +553,10 @@ async function prepMergeRaw() {
 
 async function prepPaper() {
   const url = el.urlInput.value.trim();
+  const userNotes = el.paperNotesInput.value.trim();
   if (!url) throw new Error("Paste a URL");
   setStatus("Fetching + summarizing…");
-  const res = await workerPost("/paper", { url });
+  const res = await workerPost("/paper", { url, userNotes });
   el.preview.innerHTML = "";
   const wrap = document.createElement("div");
   wrap.className = "paper-preview";
@@ -591,6 +613,8 @@ async function onSubmit() {
       el.files.value = "";
       el.fileList.innerHTML = "";
       el.urlInput.value = "";
+      el.paperNotesInput.value = "";
+      el.clearBtn.classList.add("hidden");
       el.title.disabled = false;
       el.keywords.disabled = false;
     }, 1500);

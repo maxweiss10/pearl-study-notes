@@ -88,22 +88,31 @@ Return ONLY the JSON object. No markdown fences. No commentary before or after.`
 
 const PAPER_SYSTEM_PROMPT = `You are summarizing a medical journal article for a study notes Google Doc.
 
-Given the article's full text or abstract, produce a JSON object with exactly these fields:
+Given the article's full text or abstract (and possibly the user's own takeaway note), produce a JSON object with exactly these fields:
 
 {
   "title":    string (short paper name or topic, e.g. "PARADIGM-HF: Sacubitril vs Enalapril", "CRASH-2: TXA in Trauma"),
-  "bodyText": string (2-4 short paragraphs separated by blank lines — main finding, design, takeaway),
+  "bodyText": string (2-4 short paragraphs separated by blank lines),
   "keywords": string (comma-separated, lowercase, 8-15 tight tokens including drug/device names, conditions, trial acronym, "paper")
 }
 
-bodyText format:
+=== bodyText rules ===
+
+If the user provided their own takeaway note, preserve it VERBATIM as the first paragraph. Then add supporting paragraphs derived from the article:
+  Design: <one sentence — n, setting, comparator, endpoint>.
+  <blank line>
+  Takeaway: <why it matters clinically, one sentence>.
+
+If the user did NOT provide a takeaway note, use this default structure:
   Main finding: <one sentence>.
   <blank line>
   Design: <one sentence — n, setting, comparator, endpoint>.
   <blank line>
   Takeaway: <why it matters clinically, one sentence>.
 
-Keep it terse. Return ONLY valid JSON. No markdown fences.`;
+Keep it terse. The user's personal note is sacred — do not paraphrase or "improve" it.
+
+Return ONLY valid JSON. No markdown fences.`;
 
 // ── Handler ───────────────────────────────────────────────────────────────────
 
@@ -204,8 +213,12 @@ async function handlePaper(request, env, cors) {
     return json({ error: "Could not fetch URL: " + err.message }, cors, 400);
   }
 
+  const userNotes = (body.userNotes || "").trim();
+  const noteBlock = userNotes
+    ? `\n\n===== USER'S TAKEAWAY (preserve verbatim as first paragraph of bodyText) =====\n${userNotes}\n===== END USER'S TAKEAWAY =====`
+    : "";
   const userContent = [
-    { type: "text", text: `Source URL: ${sourceUrl}\n\nRaw page content:\n\n${pageText}` },
+    { type: "text", text: `Source URL: ${sourceUrl}${noteBlock}\n\nRaw page content:\n\n${pageText}` },
   ];
 
   const resp = await callAnthropic(env.ANTHROPIC_API_KEY, {
