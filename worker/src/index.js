@@ -89,6 +89,37 @@ Exclude:
 
 Return ONLY the JSON object. No markdown fences. No commentary before or after.`;
 
+const META_ONLY_SYSTEM_PROMPT = `You are labeling a medical study-notes image (chalktalk, slide, diagram) for a Google Doc entry. You do NOT redesign the image — the user is keeping the raw photo. You just supply a title and searchable keywords.
+
+Given one or more images, return ONLY this JSON:
+
+{
+  "title":    string,   // 2-6 words, standard medical terminology
+  "keywords": string    // flat, comma-separated, lowercase, 8-15 tokens
+}
+
+=== TITLE ===
+Concise, standard medical phrasing. Examples: "WHO Analgesic Ladder", "Inpatient Sleep Management", "AF Rate vs Rhythm Control".
+
+=== KEYWORDS (for Cmd+F search) ===
+Flat, comma-separated, lowercase. 8-15 tokens. Think back-of-book index terms.
+
+Include:
+- Drug names — generic AND brand (e.g. suvorexant, belsomra)
+- Diagnoses — full name AND abbreviation (e.g. atrial fibrillation, afib)
+- Core 1-2 word concepts (e.g. insomnia, rate control, sleep hygiene)
+- Central procedures if relevant (ECG, echocardiogram)
+- Distinctive context (inpatient, geriatrics, icu)
+- Source type: one of chalktalk, slide, paper, diagram, mnemonic, flowchart, guideline
+
+Exclude:
+- Doses (10 mg, 25-100 mg)
+- Long descriptive fragments
+- Narrow abbreviations (L/K, OOB, AMS)
+- Drug class descriptors unless the class IS the entry's topic
+
+Return ONLY the JSON object. No markdown fences, no commentary.`;
+
 const PAPER_SYSTEM_PROMPT = `You are summarizing a medical journal article for a study notes Google Doc.
 
 Given the article's full text or abstract (and possibly the user's own takeaway note), produce a JSON object with exactly these fields:
@@ -166,6 +197,7 @@ export default {
 async function handlePolish(request, env, cors) {
   const body = await request.json();
   const images = body.images || [];
+  const metaOnly = body.metaOnly === true;
   if (!images.length) {
     return json({ error: "images required" }, cors, 400);
   }
@@ -181,14 +213,17 @@ async function handlePolish(request, env, cors) {
     })),
     {
       type: "text",
-      text: `Generate the JSON for ${images.length === 1 ? "this image" : "these images (merge into one combined visual)"}.`,
+      text: metaOnly
+        ? `Generate the JSON for ${images.length === 1 ? "this image" : "these images (treat them as one combined entry)"}.`
+        : `Generate the JSON for ${images.length === 1 ? "this image" : "these images (merge into one combined visual)"}.`,
     },
   ];
 
   const resp = await callAnthropic(env.ANTHROPIC_API_KEY, {
-    model: MODEL_POLISH,
-    max_tokens: 6000,
-    system: POLISH_SYSTEM_PROMPT,
+    // metaOnly uses Sonnet — it's cheaper and only needs to extract title + keywords, no design work
+    model: metaOnly ? MODEL_PAPER : MODEL_POLISH,
+    max_tokens: metaOnly ? 800 : 6000,
+    system: metaOnly ? META_ONLY_SYSTEM_PROMPT : POLISH_SYSTEM_PROMPT,
     messages: [{ role: "user", content: userContent }],
   });
 

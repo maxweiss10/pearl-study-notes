@@ -459,13 +459,24 @@ async function prepRawSingle() {
   const f = state.selectedFiles[0];
   markFileStatus(f, "busy");
   try {
+    setStatus("Converting…");
     const pngBlob = await convertToPngBlob(f);
     const pngB64  = await blobToBase64(pngBlob);
+
+    // Ask AI for title + keywords (no HTML recreation)
+    setStatus("Generating title + keywords…");
+    const meta = await workerPost("/polish", {
+      images: [{ base64: pngB64, mimeType: "image/png" }],
+      metaOnly: true,
+    });
+
     markFileStatus(f, "done");
     el.preview.innerHTML = "";
     const img = document.createElement("img");
     img.src = "data:image/png;base64," + pngB64;
     el.preview.appendChild(img);
+    el.title.value = meta.title || "";
+    el.keywords.value = meta.keywords || "";
     el.bodyField.classList.add("hidden");
     state.artifacts = { type: "raw", imageBase64: pngB64, mimeType: "image/png" };
   } catch (err) {
@@ -574,10 +585,21 @@ async function prepMergeRaw() {
     y += s.h + GAP;
   }
   const pngB64 = canvas.toDataURL("image/png").split(",")[1];
+
+  // Ask AI for title + keywords covering all stacked images (no HTML recreation)
+  setStatus("Generating title + keywords…");
+  const perImageB64 = await Promise.all(pngBlobs.map(blobToBase64));
+  const meta = await workerPost("/polish", {
+    images: perImageB64.map((b) => ({ base64: b, mimeType: "image/png" })),
+    metaOnly: true,
+  });
+
   el.preview.innerHTML = "";
   const img = document.createElement("img");
   img.src = "data:image/png;base64," + pngB64;
   el.preview.appendChild(img);
+  el.title.value = meta.title || "";
+  el.keywords.value = meta.keywords || "";
   el.bodyField.classList.add("hidden");
   state.artifacts = { type: "raw", imageBase64: pngB64, mimeType: "image/png" };
 }
