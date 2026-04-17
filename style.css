@@ -133,6 +133,41 @@ select:focus, input:focus, textarea:focus {
   box-shadow: 0 0 0 3px rgba(26, 58, 92, 0.15);
 }
 
+.input-row {
+  display: flex;
+  gap: 10px;
+  align-items: stretch;
+}
+.input-row .filedrop { flex: 1; }
+.pastezone {
+  flex: 0 0 96px;
+  border: 2px dashed var(--card-border);
+  border-radius: 8px;
+  background: var(--card);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: border-color 0.15s, background 0.15s;
+  user-select: none;
+  -webkit-user-select: none;
+}
+.pastezone.focused {
+  border-color: var(--navy);
+  background: #dbe5f2;
+  border-style: solid;
+}
+.pastezone:hover { border-color: var(--navy); }
+.pastezone-hint {
+  text-align: center;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--muted);
+  line-height: 1.4;
+  pointer-events: none;
+}
+.pastezone:focus { outline: none; border-color: var(--navy); background: #dbe5f2; }
+
 .filedrop {
   display: block;
   border: 2px dashed var(--card-border);

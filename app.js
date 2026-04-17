@@ -55,6 +55,7 @@ const el = {
   fileField:   document.getElementById("fileField"),
   files:       document.getElementById("files"),
   dropZone:    document.getElementById("dropZone"),
+  pasteZone:   document.getElementById("pasteZone"),
   fileList:    document.getElementById("fileList"),
   urlField:    document.getElementById("urlField"),
   urlInput:    document.getElementById("urlInput"),
@@ -174,22 +175,52 @@ el.dropZone.addEventListener("drop", (e) => {
   })
 );
 
-// Paste images from clipboard anywhere on the page (except when typing in text inputs)
-window.addEventListener("paste", (e) => {
-  const items = Array.from(e.clipboardData?.items || []);
-  const imageFiles = items
-    .filter((i) => i.kind === "file" && i.type.startsWith("image/"))
-    .map((i) => i.getAsFile())
-    .filter(Boolean);
-  if (!imageFiles.length) return;
-  // If paste target is a text input/textarea (other than the URL field), let the text paste happen
-  const t = e.target;
-  const isTextInput = t && (t.tagName === "TEXTAREA" ||
-    (t.tagName === "INPUT" && t.type !== "url" && t.id !== "urlInput"));
-  if (isTextInput) return;
+// Paste-zone focus feedback — gives user a clear target to click-then-paste
+el.pasteZone.addEventListener("click", () => el.pasteZone.focus());
+el.pasteZone.addEventListener("focus", () => el.pasteZone.classList.add("focused"));
+el.pasteZone.addEventListener("blur",  () => el.pasteZone.classList.remove("focused"));
+
+function extractImagesFromClipboard(clipboardData) {
+  if (!clipboardData) return [];
+  const files = [];
+  // Path 1: clipboardData.files (Chromium, Firefox)
+  for (const f of Array.from(clipboardData.files || [])) {
+    if (f.type.startsWith("image/")) files.push(f);
+  }
+  // Path 2: clipboardData.items (Safari, fallback)
+  if (!files.length) {
+    for (const it of Array.from(clipboardData.items || [])) {
+      if (it.kind === "file" && it.type.startsWith("image/")) {
+        const f = it.getAsFile();
+        if (f) files.push(f);
+      }
+    }
+  }
+  return files;
+}
+
+function handlePasteEvent(e) {
+  const imageFiles = extractImagesFromClipboard(e.clipboardData);
+  if (!imageFiles.length) {
+    diag.log("paste event: no image in clipboard");
+    return false;
+  }
   e.preventDefault();
   diag.log("paste image(s) received", { count: imageFiles.length });
   handleDroppedFiles(imageFiles);
+  return true;
+}
+
+// Dedicated paste zone catches Cmd+V when focused
+el.pasteZone.addEventListener("paste", handlePasteEvent);
+
+// Also catch paste anywhere on the page, unless typing in a text field
+window.addEventListener("paste", (e) => {
+  const t = e.target;
+  const isTextInput = t && (t.tagName === "TEXTAREA" ||
+    (t.tagName === "INPUT" && t.id !== "urlInput" && t.type !== "url"));
+  if (isTextInput) return;  // let the field paste text normally
+  handlePasteEvent(e);
 });
 
 onModeChange();
