@@ -5,11 +5,11 @@
 
 // Opus for polished-recreation calls (best vision + design quality).
 // Sonnet for paper-URL summaries (cheaper, quality is fine for text extraction).
-const MODEL_POLISH = "claude-opus-4-5";
-const MODEL_PAPER  = "claude-sonnet-4-5";
+const MODEL_POLISH = "claude-opus-4-8";
+const MODEL_PAPER  = "claude-sonnet-5";
 const ANTHROPIC_URL = "https://api.anthropic.com/v1/messages";
 
-const POLISH_SYSTEM_PROMPT = `You are building a polished medical study-notes entry from chalktalk/slide photos. Think like an infographic designer who also writes a thorough back-of-book index.
+const POLISH_SYSTEM_PROMPT = `You are building a polished medical study-notes entry from chalktalk/slide photos. The output image gets squeezed into a 6.5-inch Google Doc column, so the design goal is MAXIMUM TEXT SIZE with MINIMUM dead space — every horizontal pixel spent on words, not padding.
 
 Given one or more images, produce a JSON object with exactly these fields and nothing else:
 
@@ -24,47 +24,53 @@ Concise, standard medical phrasing. Examples: "WHO Analgesic Ladder", "Inpatient
 
 === HTML (the recreation) ===
 
-This is NOT a description of the image. This is a professionally designed infographic that faithfully represents every drug, dose, label, arrow, caveat, category, and case from the original. Design first, then transcribe content into that design.
+This is NOT a description of the image. It faithfully carries every drug, dose, label, arrow, caveat, category, and case from the original — set in huge type.
 
-Hard rules:
-- All CSS inline in a single <style> tag, no external resources
-- Start with a <style> block, then a content <div class="container">
-- DO NOT include a title or subtitle at the top — the Google Doc renders the title above the image
-- System font stack: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif
-- max-width: 750px; min 14px body text, 18px+ headings
-- White background, clean typography, generous whitespace
-- No <html>/<head>/<body> boilerplate
-- **NEVER use rotated, vertical, or sideways text.** No \`transform: rotate(...)\`, no \`writing-mode: vertical-*\`, no text with \`-webkit-text-orientation\`. These render upside-down or unreadable in the PNG export.
-  - If the original slide has a vertical axis label like "increasing strength" or "intensity ↑", replace it with a **normal horizontal label above the column** (e.g. a small caps header "↓ INCREASING STRENGTH") or with a side column of arrows (↑ ↓ → ←) that are single characters — never rotated blocks of text.
-- If a card or cell has no written content in the original, omit it — do not emit an empty box. Every rendered box must contain readable text.
+Start your html with EXACTLY this <style> block, then a <div class="pearl">...</div>:
 
-Design vocabulary to pick from:
-- **Dark colored header bars** for section names (small caps label above a bar, or bar with white text inside)
-- **Light-background card boxes** with subtle borders for side-by-side concepts
-- **Structured tables** with dark header rows for comparisons (drugs, pros/cons, rate vs rhythm, etc.)
-- **Colored emphasis cells**: red bg + red text for AVOID / danger, green for preferred, yellow for caution
-- **Arrow flows** (→ ⟶ ↓) for algorithms and dose escalation ladders
-- **Row labels** (Dose, Pro, Con, Mechanism) on the left of comparison tables
-- **Hierarchy** via font weight and color — not by font size alone
+<style>
+.pearl{width:900px;box-sizing:border-box;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;color:#111;background:#fff;padding:2px;}
+.sec{background:#1a3a5c;color:#fff;font-size:33px;font-weight:700;letter-spacing:1.5px;padding:10px 16px;border-radius:6px;margin:0 0 14px;}
+.sec.later{margin-top:26px;}
+.strip{font-size:33px;line-height:1.3;margin:0 0 12px;}
+.strip .lab{font-weight:700;color:#1a3a5c;}
+.strip .mut{color:#5a6b80;}
+table.cmp{width:100%;border-collapse:collapse;}
+.cmp th{background:#1a3a5c;color:#fff;font-size:25px;padding:8px 12px;text-align:left;letter-spacing:.5px;}
+.cmp td{font-size:33px;line-height:1.28;padding:11px 12px;border-bottom:1.5px solid #dfe6ee;vertical-align:top;}
+.cmp tr:nth-child(even) td{background:#f6f8fb;}
+.drug{font-weight:700;color:#1a3a5c;}
+.brand{font-weight:400;color:#6b7c93;font-size:29px;}
+.mech{color:#5a6b80;font-style:italic;}
+.num{display:inline-block;width:40px;height:40px;border-radius:50%;background:#1a3a5c;color:#fff;font-size:25px;font-weight:700;text-align:center;line-height:40px;margin-right:8px;}
+.dose{white-space:nowrap;font-variant-numeric:tabular-nums;background:#f1f4f8;border-radius:6px;padding:0 8px;font-size:31px;}
+.pro{color:#1e6b3a;}
+.con{color:#8b2a2a;}
+.warn{color:#8b2a2a;background:#fceeee;border-radius:6px;padding:0 8px;font-size:31px;display:inline-block;}
+.good{color:#1e6b3a;background:#e8f5ec;border-radius:6px;padding:0 8px;font-size:31px;display:inline-block;}
+.banner{background:#eef3f9;border:2px solid #c8d6e5;border-radius:8px;padding:9px 14px;font-size:32px;margin-top:4px;}
+.note{font-size:30px;font-style:italic;color:#5a6b80;margin:-4px 0 10px 2px;}
+.code{font-family:ui-monospace,SFMono-Regular,Menlo,monospace;background:#f1f4f8;color:#1a3a5c;font-weight:600;font-size:27px;padding:1px 9px;border-radius:6px;}
+</style>
 
-Approved palette (use these, not other colors):
-- Navy header:       #1a3a5c (text + backgrounds)
-- Card fill:         #eef3f9
-- Card border:       #c8d6e5
-- Alt row:           #f8f9fb or #f5f7fa
-- Red danger text:   #8b2a2a
-- Red danger bg:     #fceeee
-- Soft red bg:       #fcf5f5
-- Muted text:        #6b7c93 or #888888
-- Primary body:      #1a1a1a
+Layout rules (in priority order):
+1. **Big text, no air.** Body text stays at the 33px sizes above — never shrink below 29px to fit more in. The width is spent on words: no card grids, no empty columns, no decorative padding.
+2. **Inline flow beats boxes.** Short lists become ONE flowing line: a bold navy lead-in (.strip > .lab) then items separated by " · ". Example: "<div class=\\"strip\\"><span class=\\"lab\\">Day is Day:</span> lights on · blinds up · ↓ naps · OOB / mobilize</div>". Never render 5 one-word bullets as a tall vertical list or a padded card.
+3. **Tables only for real comparisons** (drugs × attributes). One drug per ROW: first cell = .drug name + .brand + .dose chip; second cell = pearls with .warn / .good / .pro / .con coloring. 2–3 columns max.
+4. **Section bars (.sec)** for major sections only; skip them for entries with one topic.
+5. **Aspect ratio: aim for height ≤ 1.5× width.** If the content would run much taller, tighten by merging related lines — never by shrinking text.
+6. DO NOT include a title or subtitle at the top — the Google Doc renders the title above the image. Do not repeat the title as a header.
+7. **NEVER use rotated, vertical, or sideways text.** No transform: rotate(...), no writing-mode: vertical-*. Replace vertical axis labels with a horizontal .note line (e.g. "↓ increasing strength / intensity").
+8. **No empty boxes or cells.** If a cell has no content in the original, use colspan to merge, or an em dash — never an empty box.
+9. All CSS in the single <style> block above (you may append a few extra rules after it if truly needed); no external resources; no <html>/<head>/<body>.
 
 Content fidelity:
-- Transcribe every labeled item from the slide. If the slide shows 5 drugs and 3 rows of attributes, your table is 5×3.
+- Transcribe every labeled item from the slide. If the slide shows 5 drugs and 3 attributes each, all 15 facts appear.
 - Preserve original terminology (e.g. "Ok for L/K" means ok for liver/kidney — keep as written).
-- Preserve units and dose ranges verbatim.
-- If the slide uses ↓ or ↑ arrows, keep them.
+- Preserve units and dose ranges verbatim. Keep ↓ and ↑ arrows.
+- Parentheticals become inline .mut spans, not separate lines.
 
-Multi-image inputs: WEAVE them into one coherent polished visual (shared sections, unified tables) rather than stacking them side-by-side.
+Multi-image inputs: WEAVE them into one coherent visual (shared sections, unified tables) rather than stacking them side-by-side.
 
 === KEYWORDS (for Cmd+F search) ===
 
@@ -216,13 +222,18 @@ async function handlePolish(request, env, cors) {
     },
   ];
 
-  const resp = await callAnthropic(env.ANTHROPIC_API_KEY, {
+  const payload = {
     // metaOnly uses Sonnet — it's cheaper and only needs to extract title + keywords, no design work
     model: metaOnly ? MODEL_PAPER : MODEL_POLISH,
-    max_tokens: metaOnly ? 800 : 6000,
+    max_tokens: metaOnly ? 2000 : 16000,
     system: metaOnly ? META_ONLY_SYSTEM_PROMPT : POLISH_SYSTEM_PROMPT,
     messages: [{ role: "user", content: userContent }],
-  });
+  };
+  if (!metaOnly) {
+    // Opus 4.8: adaptive thinking improves layout planning; thinking is off when omitted
+    payload.thinking = { type: "adaptive" };
+  }
+  const resp = await callAnthropic(env.ANTHROPIC_API_KEY, payload);
 
   const parsed = extractJson(resp);
   return json(parsed, cors);
@@ -257,8 +268,9 @@ async function handlePaper(request, env, cors) {
   ];
 
   const resp = await callAnthropic(env.ANTHROPIC_API_KEY, {
+    // Sonnet 5 runs adaptive thinking by default; max_tokens covers thinking + output
     model: MODEL_PAPER,
-    max_tokens: 2000,
+    max_tokens: 4000,
     system: PAPER_SYSTEM_PROMPT,
     messages: [{ role: "user", content: userContent }],
   });

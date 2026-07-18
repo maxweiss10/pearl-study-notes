@@ -802,7 +802,7 @@ function blobToBase64(blob) {
 async function renderHtmlToPng(htmlString) {
   const iframe = document.createElement("iframe");
   iframe.className = "polish-frame";
-  iframe.style.cssText = "position:absolute;left:-9999px;top:0;width:800px;border:none;background:#fff;";
+  iframe.style.cssText = "position:absolute;left:-9999px;top:0;width:912px;border:none;background:#fff;";
   document.body.appendChild(iframe);
   const doc = iframe.contentDocument;
   doc.open();
@@ -816,8 +816,8 @@ async function renderHtmlToPng(htmlString) {
     scale: 2,
     useCORS: true,
     logging: false,
-    width: 800,
-    windowWidth: 800,
+    width: 912,
+    windowWidth: 912,
   });
   const trimmed = trimWhitespace(canvas);
   document.body.removeChild(iframe);
