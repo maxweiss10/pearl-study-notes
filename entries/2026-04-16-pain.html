@@ -1,61 +1,30 @@
 <div class="pearl e-pai">
-<style>
-.e-pai{--c1:#15803d;--b1:#e9f5ec;--c2:#8a6d00;--b2:#faf3d5;--c3:#c2410c;--b3:#fdeee4;--c4:#b3372f;--b4:#fdeaea}
-@media (prefers-color-scheme:dark){.e-pai{--c1:#7fc796;--b1:#17322a;--c2:#e5c95c;--b2:#38300f;--c3:#f0a071;--b3:#3a2318;--c4:#f09a92;--b4:#3a2126}}
-.e-pai .colhead{display:grid;grid-template-columns:2.6em minmax(0,1.15fr) minmax(0,1fr);gap:0 14px;font-size:.72em;font-weight:800;letter-spacing:.1em;text-transform:uppercase;color:var(--mut2);margin:0 0 4px;padding:0 2px}
-.e-pai .rung{display:grid;grid-template-columns:2.6em minmax(0,1.15fr) minmax(0,1fr);gap:4px 14px;border-left:6px solid;border-radius:8px;padding:9px 10px;margin:0 0 7px;align-items:center}
-.e-pai .rung.r1{border-color:var(--c1);background:var(--b1)}
-.e-pai .rung.r2{border-color:var(--c2);background:var(--b2)}
-.e-pai .rung.r3{border-color:var(--c3);background:var(--b3)}
-.e-pai .rung.r4{border-color:var(--c4);background:var(--b4)}
-.e-pai .n{width:1.7em;height:1.7em;border-radius:50%;color:#fff;font-weight:800;font-size:.9em;display:flex;align-items:center;justify-content:center}
-.e-pai .r1 .n{background:var(--c1)} .e-pai .r2 .n{background:var(--c2)} .e-pai .r3 .n{background:var(--c3)} .e-pai .r4 .n{background:var(--c4)}
-.e-pai .dn{font-weight:800}
-.e-pai .ml{display:none}
-.e-pai .qa{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:4px 16px;padding:5px 0;border-bottom:1px dashed var(--line)}
-.e-pai .qa:last-of-type{border-bottom:none}
-.e-pai .q{color:var(--mut)}
-.e-pai .a{font-weight:700;color:var(--accent)}
-@media (max-width:560px){
-  .e-pai .colhead{display:none}
-  .e-pai .rung{grid-template-columns:2.6em minmax(0,1fr)}
-  .e-pai .iv{grid-column:2}
-  .e-pai .ml{display:inline;font-weight:800;font-size:.72em;letter-spacing:.08em;color:var(--mut2);margin-right:6px}
-  .e-pai .qa{grid-template-columns:1fr}
-}
-</style>
-
-  <div class="note">↓ increasing strength / intensity</div>
-  <div class="colhead"><span></span><span>PO</span><span>IV</span></div>
-
-  <div class="rung r1">
-    <span class="n">1</span>
-    <div><span class="ml">PO</span><span class="dn">Acetaminophen</span> <span class="mut">*pain dose:</span> <span class="dose">975 mg q8hr</span></div>
-    <div class="iv mut">—</div>
+  <p class="note">↓ increasing strength / intensity</p>
+  <div class="colhead2"><span>PO</span><span>IV</span></div>
+  <div class="row2 rule">
+    <div><b>1.</b> <b>Acetaminophen</b> <span class="mut">*pain dose:</span> <span class="dose">975 mg q8hr</span></div>
+    <div><span class="mlab">IV</span><span class="mut">—</span></div>
   </div>
-  <div class="rung r2">
-    <span class="n">2</span>
-    <div><span class="ml">PO</span><span class="dn">Ibuprofen / NSAIDs</span></div>
-    <div class="iv"><span class="ml">IV</span><span class="dn">Ketorolac</span></div>
+  <div class="row2 rule">
+    <div><b>2.</b> <b>Ibuprofen / NSAIDs</b></div>
+    <div><span class="mlab">IV</span><b>Ketorolac</b></div>
   </div>
-  <div class="rung r3">
-    <span class="n">3</span>
-    <div><span class="ml">PO</span><span class="dn">Tramadol</span> · <span class="dn">Codeine</span></div>
-    <div class="iv mut">—</div>
+  <div class="row2 rule">
+    <div><b>3.</b> <b>Tramadol</b> · <b>Codeine</b></div>
+    <div><span class="mlab">IV</span><span class="mut">—</span></div>
   </div>
-  <div class="rung r4">
-    <span class="n">4</span>
-    <div><span class="ml">PO</span><span class="dn">Oxycodone</span> · <span class="dn">Hydromorphone</span> <span class="brand">(k/l)</span> · <span class="dn">Morphine</span></div>
-    <div class="iv"><span class="ml">IV</span><span class="dn">Hydromorphone</span> <span class="brand">(k/l)</span> · <span class="dn">Morphine</span></div>
+  <div class="row2 rule">
+    <div><b>4.</b> <b>Oxycodone</b> · <b>Hydromorphone</b> <span class="brand">(k/l)</span> · <b>Morphine</b></div>
+    <div><span class="mlab">IV</span><b>Hydromorphone</b> <span class="brand">(k/l)</span> · <b>Morphine</b></div>
   </div>
 
-  <div class="sec later" style="margin-top:18px;">CASES</div>
-  <div class="qa"><span class="q">Headache?</span><span class="a">Tylenol*</span></div>
-  <div class="qa"><span class="q">Procedure, intervention, therapies?</span><span class="a">IV v. well-planned PO</span></div>
-  <div class="qa"><span class="q">With nausea &amp; vomiting?</span><span class="a">IV</span></div>
-  <div class="qa"><span class="q">Worsening pain?</span><span class="a">Move down the ladder / adjust current meds</span></div>
+  <div class="sec later">Cases</div>
+  <div class="strip">Headache? — <b>Tylenol*</b></div>
+  <div class="strip">Procedure, intervention, therapies? — <b>IV v. well-planned PO</b></div>
+  <div class="strip">With nausea &amp; vomiting? — <b>IV</b></div>
+  <div class="strip">Worsening pain? — <b>Move down the ladder / adjust current meds</b></div>
 
-  <div class="sec later">BUILDING BLOCKS</div>
-  <div class="strip"><span class="lab">Start mild</span> · <span class="lab">Empower PO &gt;&gt; IV</span> <span class="mut">*reassurance, treat nausea, PO lasts longer</span></div>
-  <div class="strip"><span class="lab">Don't forget non-pharm!</span> repositioning · heat · ice · warm tea · reassurance · modify room</div>
+  <div class="sec later">Building blocks</div>
+  <div class="strip"><b>Start mild</b> · <b>Empower PO &gt;&gt; IV</b> <span class="mut">*reassurance, treat nausea, PO lasts longer</span></div>
+  <div class="strip"><b>Don't forget non-pharm!</b> repositioning · heat · ice · warm tea · reassurance · modify room</div>
 </div>

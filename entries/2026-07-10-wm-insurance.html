@@ -1,36 +1,22 @@
 <div class="pearl e-wmi">
-<style>
-.e-wmi{--ok:#15803d;--okbg:#e9f5ec;--no:#b3372f;--nobg:#fdeaea;--cash:#57534e;--cashbg:#f0efed}
-@media (prefers-color-scheme:dark){.e-wmi{--ok:#7fc796;--okbg:#17322a;--no:#f09a92;--nobg:#3a2126;--cash:#b8b2ac;--cashbg:#2a2825}}
-.e-wmi .pay{display:grid;grid-template-columns:minmax(160px,36%) 1fr;gap:4px 16px;border-left:5px solid var(--line);border-radius:8px;background:var(--zebra);padding:10px 14px;margin:0 0 8px;align-items:start}
-.e-wmi .pay.ok{border-left-color:var(--ok)}
-.e-wmi .pay.no{border-left-color:var(--no);background:var(--nobg)}
-.e-wmi .pay.cash{border-left-color:var(--cash)}
-.e-wmi .pn{font-weight:800}
-.e-wmi .st{display:inline-block;font-weight:800;font-size:.78em;border-radius:6px;padding:1px 8px;margin-left:6px;vertical-align:1px}
-.e-wmi .st.ok{color:var(--ok);background:var(--okbg)}
-.e-wmi .st.no{color:var(--no);background:#fff3}
-.e-wmi .st.cash{color:var(--cash);background:var(--cashbg)}
-.e-wmi .crit{line-height:1.6}
-@media (max-width:560px){.e-wmi .pay{grid-template-columns:1fr}}
-</style>
-
-  <div class="pay ok">
-    <div class="pn">Commercial <span class="st ok">✓</span><br><span class="brand">UCSF, Blue Shield, SFSD</span></div>
-    <div class="crit"><span class="dose">BMI &gt; 40</span> lifetime</div>
-  </div>
-  <div class="pay ok">
-    <div class="pn">Medicare Bridge Program <span class="st ok">✓</span></div>
-    <div class="crit"><span class="dose">BMI &gt; 35</span><br><span class="dose">BMI &gt; 30</span> + CKD stage 3<br><span class="dose">BMI &gt; 27</span> + pre-diabetes</div>
-  </div>
-  <div class="pay no">
-    <div class="pn">Medi-Cal <span class="st no">✗</span></div>
-    <div class="crit"><strong>Not covered</strong></div>
-  </div>
-  <div class="pay cash">
-    <div class="pn">Out-of-Pocket <span class="st cash">$</span></div>
-    <div class="crit">NovoCare · LillyDirect · compounding pharmacies</div>
-  </div>
-
-  <div class="banner" style="margin-top:14px;"><span class="eyebrow">WEIGHT MANAGEMENT DOT PHRASE</span><br><span class="code">.WMpriorauth</span></div>
+  <div class="tblwrap"><table class="cmp">
+    <tr><th style="width:38%;">Payer</th><th>Coverage criteria</th></tr>
+    <tr>
+      <td><span class="drug">Commercial</span><br><span class="brand">UCSF, Blue Shield, SFSD</span></td>
+      <td><span class="dose">BMI &gt; 40</span> lifetime</td>
+    </tr>
+    <tr>
+      <td><span class="drug">Medicare Bridge Program</span></td>
+      <td><span class="dose">BMI &gt; 35</span><br><span class="dose">BMI &gt; 30</span> + CKD stage 3<br><span class="dose">BMI &gt; 27</span> + pre-diabetes</td>
+    </tr>
+    <tr>
+      <td><span class="drug">Medi-Cal</span></td>
+      <td><b>Not covered</b></td>
+    </tr>
+    <tr>
+      <td><span class="drug">Out-of-Pocket</span></td>
+      <td>NovoCare · LillyDirect · compounding pharmacies</td>
+    </tr>
+  </table></div>
+  <p class="ptext" style="margin-top:10px;"><span class="eyebrow">Weight management dot phrase</span> &nbsp;<span class="code">.WMpriorauth</span></p>
 </div>

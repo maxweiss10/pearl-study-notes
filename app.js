@@ -5,7 +5,6 @@
 
   const MONTHS = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
   const TYPE_TOKENS = ['chalktalk', 'slide', 'paper', 'photo', 'note', 'video'];
-  const SECTION_DOTS = ['#c2452d','#7c3aed','#ad2d51','#0e7490','#0f766e','#b45309','#4f46e5','#15803d','#a21caf','#374151'];
   const WHITEBOOK_URL = 'https://maxweiss10.github.io/whitebook/pdfjs/web/viewer.html?file=../../whitebook.pdf';
 
   const $list = document.getElementById('list');
@@ -46,11 +45,6 @@
     header.appendChild(h2);
     header.appendChild(time);
     card.appendChild(header);
-
-    const tags = document.createElement('p');
-    tags.className = 'tags';
-    tags.textContent = meta.keywords;
-    card.appendChild(tags);
 
     if (meta.source) {
       const src = document.createElement('p');
@@ -171,11 +165,7 @@
       });
     });
     const types = TYPE_TOKENS.filter(function (t) { return freq[t]; });
-    const rest = Object.keys(freq)
-      .filter(function (k) { return TYPE_TOKENS.indexOf(k) === -1 && freq[k] > 1; })
-      .sort(function (a, b) { return freq[b] - freq[a] || a.localeCompare(b); })
-      .slice(0, 10);
-    types.concat(rest).forEach(function (kw) {
+    types.forEach(function (kw) {
       const b = document.createElement('button');
       b.className = 'chip';
       b.type = 'button';
@@ -199,12 +189,9 @@
       h += '</ul>';
     }
     h += '<p class="toc-title">Contents</p>';
-    orderedSections.forEach(function (s, i) {
+    orderedSections.forEach(function (s) {
       if (!s.metas.length) return;
-      const dot = SECTION_DOTS[i % SECTION_DOTS.length];
-      h += '<div class="toc-sec"><a class="toc-sec-link" href="#sec-' + slugify(s.name) + '">' +
-           '<span class="dot" style="background:' + dot + '"></span>' + s.name +
-           ' <span class="toc-n">' + s.metas.length + '</span></a><ul>';
+      h += '<div class="toc-sec"><a class="toc-sec-link" href="#sec-' + slugify(s.name) + '">' + s.name + '</a><ul>';
       s.metas.forEach(function (m) {
         h += '<li><a href="#' + m.id + '">' + m.title + '</a></li>';
       });
@@ -226,15 +213,11 @@
       return { name: name, metas: metas.filter(function (m) { return (m.section || 'Unsorted') === name; }) };
     });
 
-    ordered.forEach(function (s, i) {
+    ordered.forEach(function (s) {
       if (!s.metas.length) return;
       const head = document.createElement('h2');
       head.className = 'sechead';
       head.id = 'sec-' + slugify(s.name);
-      const dot = document.createElement('span');
-      dot.className = 'dot';
-      dot.style.background = SECTION_DOTS[i % SECTION_DOTS.length];
-      head.appendChild(dot);
       head.append(s.name);
       $list.appendChild(head);
       const rec = { name: s.name, el: head, entries: [] };

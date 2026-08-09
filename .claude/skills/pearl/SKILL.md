@@ -1,6 +1,6 @@
 ---
 name: pearl
-description: Pearl — the user's supplementary White Book, a searchable real-text study-notes site at maxweiss10.github.io/pearl-study-notes. Turns anything — chalktalk/slide photos, screenshots, paper or article URLs, YouTube videos, blocks of text, quick facts — into individually-optimized visual entries organized by medical sub-discipline. Understands free-form requests, no fixed syntax ("put these images together as-is", "make this text into a visual", "turn this video into a concise guide", "move X to cardiology", "fix the pressors entry"). Use for /pearls, /pearl, "add a pearl", "add to my study notes", or any request to capture, edit, reorganize, or regenerate study-note entries.
+description: Pearl — the user's supplementary White Book, a searchable real-text study-notes site at maxweiss10.github.io/pearl-study-notes. Turns anything — chalktalk/slide photos, screenshots, paper or article URLs, YouTube videos, blocks of text, quick facts — into clean clinical-reference entries organized by medical sub-discipline. Understands free-form requests, no fixed syntax ("put these images together as-is", "make this text into a visual", "turn this video into a concise guide", "move X to cardiology", "fix the pressors entry"). Use for /pearls, /pearl, "add a pearl", "add to my study notes", or any request to capture, edit, reorganize, or regenerate study-note entries.
 argument-hint: <anything — images, URL, text, or an instruction in plain words>
 ---
 
@@ -15,12 +15,12 @@ Interpret intent from whatever the user says:
 
 | Intent (any phrasing) | Action |
 |---|---|
-| Photo(s) of a chalktalk / slide / whiteboard / handout | **Redesign** into an optimized visual entry (default) |
+| Photo(s) of a chalktalk / slide / whiteboard / handout | **Redesign** into a reference entry (default) |
 | "use these exact images", "as-is", "don't redesign", "just put them together" | **Raw** — insert photo(s) untouched (stacked if several), still auto-title/tag/section |
 | Several images, combine-vs-separate unclear | One AskUserQuestion: separate entries / one merged redesign / one raw stack |
-| "make this text/block into a visual" | **Text → visual** entry |
+| "make this text/block into an entry" | **Text** entry |
 | Paper or article URL (± their takeaway) | **Paper** entry — takeaway used VERBATIM as body if given; else 3 short lines (Main finding / Design / Takeaway); source link |
-| YouTube link, "make this video a concise guide" | **Video** entry — transcript (§2) → distill hard → visual guide; source link |
+| YouTube link, "make this video a concise guide" | **Video** entry — transcript (§2) → distill hard; source link |
 | A quick fact or mnemonic in a sentence | Small **text pearl** |
 | "fix / retitle / regenerate / move to <section> / delete [entry]" | **Edit** `entries/*.html` and/or `manifest.json` in place — ids and filenames stay stable |
 
@@ -38,37 +38,39 @@ Legacy keywords (`raw`, `each`, `merge`, `merge-raw`, `paper`) still work but ar
 - **Title**: 2-6 words, medical terminology ("ICU Pressors & Inotropes").
 - **id**: `YYYY-MM-DD-slug` (today + 2-4 word kebab slug) → file `entries/{id}.html`.
 - **Section**: pick from `manifest.json → sections` (medical sub-disciplines, White-Book style). If none fits, CREATE one at discipline level (e.g. "Pulmonology", "Infectious Diseases", "GI & Hepatology", "Heme/Onc", "Neurology", "Outpatient & Prevention", "Procedures", "UCSF Systems & Epic") and insert it at a sensible position in the sections array. No near-duplicates, no over-narrow sections.
-- **Keywords**: 8-15 flat lowercase comma-separated tokens — drugs (generic + brand), diagnoses (full + abbrev), core concepts, distinctive context, plus one source-type token (`chalktalk`/`slide`/`paper`/`photo`/`note`/`video`). No doses, no sentence fragments.
+- **Keywords**: 8-15 flat lowercase comma-separated tokens — drugs (generic + brand), diagnoses (full + abbrev), core concepts, distinctive context, plus one source-type token (`chalktalk`/`slide`/`paper`/`photo`/`note`/`video`). No doses, no sentence fragments. Keywords live in the manifest ONLY — the site indexes them for search but never displays them.
 
-## 4 · Design the entry — individually optimized, real text always
+## 4 · Design the entry — clinical reference register, real text always
 
-Each entry gets its OWN design chosen for maximum comprehension of THAT content. There is no house theme to match.
+The register is Sanford Guide / Pocket Medicine, not slides. Typography, alignment, and position carry ALL hierarchy. **Grayscale print test:** if the entry's hierarchy would collapse printed in grayscale, redo it — hierarchy must be structural, not chromatic.
 
-**Hard rules**
-- Root: `<div class="pearl e-{short}">` where `{short}` is 3-4 letters for this entry.
-- Optional `<style>` INSIDE that div; EVERY selector prefixed with `.e-{short}` (leakage into other entries is a bug).
-- Colors as local CSS vars with dark-mode overrides:
-  `.e-x{--a:#B; --abg:#T;} @media (prefers-color-scheme:dark){.e-x{--a:#L; --abg:#D;}}`
-  Check contrast mentally in BOTH themes (body text ≥ 4.5:1).
-- Real text only. No scripts, no iframes, no external resources (fonts, CDNs, remote images), no `<html>/<head>/<body>`, no entry title at top (the site renders it), no rotated/vertical text, no fixed pixel widths on containers — percent/auto only, and multi-column grids must stack below ~560px via a media query in the scoped style.
-- Site base classes are available and encouraged where they fit: `.strip .lab .mut .mech .note .dose .code .warn .good .pro .con .banner .num .brand .star .avoid .cell-avoid .eyebrow .ptext .photo .sec` — plus site vars `--ink --mut --mut2 --line --zebra --paper --accent --bar-bg --chipbg`.
-- Wrap every `<table>` in `<div class="tblwrap">` so it side-scrolls on phones.
+**Color budget (strict)**
+- Grayscale by default. The site accent belongs to links and chrome — never inside entries.
+- Red (`.warn`) is reserved EXCLUSIVELY for clinical danger: toxicity, contraindication, do-not-miss. Nothing else is colored, so when something is red it lands.
+- No filled bars/panels/pills/badges/coins/tiles, no shadows, no rounded boxes, no per-entry palettes, no decorative glyphs or emoji (no ⚠ ★ ☾ — red text IS the caution marker).
 
-**Choose the structure from what the content IS**
-- Escalation / severity → ladder rows with graduated color (green→red) and numbered rungs
-- Sequence / algorithm / exam flow → numbered steps on a vertical rail
-- Agent comparison → table whose columns mean something (consider split “+ Pro | – Con” columns)
-- Mnemonic → oversized key letters, side-by-side contrast panels
-- Categorical pharmacology → color-coded category badges with a small key (e.g. receptor activity α / β / V₁)
-- Checklist / environment → grouped panels, thematic when it aids memory (dark “night” panel vs light “day” panel)
-- Reference directory (dot phrases, phone numbers) → aligned `code | description` grid
-- Coverage / eligibility → status-striped rows (✓ green / ✗ red / $ neutral)
-- Paper / video takeaway → small eyebrow label + emphatic one-liner or 3 tight strips
+**Scan anatomy** — every row same fixed slots, so the eye drops straight down a column:
+- drug/lead name in `<b>` · attributes plain or `.mut`/`.mech` · dose in `.dose` (tabular figures, units verbatim) · cautions LAST, in `.warn`
+- ordered items: plain bold `1.` / `A.` at text size, inline — never coins or tiles
 
-**Color doctrine**: 2-3 accents max; color must ENCODE something (severity, category, phase, yes/no) — never decoration; never hue alone (pair with a glyph/label/position: ✓ ✗ ⚠ ★ ☾ ☀ α β); prefer colorblind-safe pairs (blue/orange) when the pair itself carries the meaning.
-**Density doctrine**: maximize signal per screen — inline flow lines beat bullet lists, merge related facts, no decorative padding, no empty boxes. A genuinely huge multi-topic source becomes 2 entries.
+**Base primitives cover nearly everything** (`pearl.css`):
+`.sec` small-caps hairline section label (+`.later`) · `.caps` inline small-caps lead · `.strip` flow line · `.lab` bold lead-in · `.mut` `.mech` `.note` `.brand` gray secondary · `.row2` two-column hairline row (`.rule` adds a column divider; `.full` spans both; stacks automatically on phones with `.mlab` slot labels) · `.colhead2` small-caps column headers · `.duo` side-by-side halves · `table.cmp` hairline table (small-caps `th`, no zebra, wrap in `.tblwrap`) · `.dose` `.warn` `.drug` `.code` `.eyebrow` `.ptext` `.photo`
 
-**Raw photos**: `sips -s format jpeg -Z 1600 "<f>" --out entries/img/{id}-N.jpg`; fragment is the photos stacked: `<div class="pearl e-x"><img class="photo" src="entries/img/{id}-1.jpg" alt="one-line content summary">…</div>` (alt text keeps it searchable).
+**Structure by content** (all hairlines + typography):
+- Ordered escalation / sequence → `.colhead2` + numbered `.row2.rule` rows
+- Algorithm → Assess | Intervene `.row2.rule` columns
+- Agent comparison → `.cmp` table; Pro | Con as plain headers (position carries the meaning, not color)
+- Exam flow → `.sec`-numbered stages, or `.caps` position leads in strips
+- Mnemonic → bold key letters at text size in aligned `.row2` rows
+- Directory → `.code` | description grid rows
+- Paper / video → `.eyebrow` source label + bold takeaway in `.ptext`
+- Raw photos → stacked `.photo` imgs with detailed searchable alt text
+
+**Scoped `<style>` is the exception**, not the rule: only for a layout the primitives genuinely don't cover; every selector prefixed `.e-{short}`; layout properties only — never colors.
+
+**Hard rules**: root `<div class="pearl e-{short}">`; real text only; no scripts/iframes/external resources; no `<html>/<head>/<body>`; no title at top (site renders it); no rotated text; no fixed pixel widths on containers; density tight — hairline dividers, inline flow over bullet lists, no decorative padding; split a huge multi-topic source into 2 entries.
+
+**Raw photos**: `sips -s format jpeg -Z 1600 "<f>" --out entries/img/{id}-N.jpg`; fragment = stacked `<img class="photo" src="entries/img/{id}-N.jpg" alt="detailed content summary">`.
 
 ## 5 · Manifest
 
