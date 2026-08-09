@@ -1,31 +1,51 @@
-<div class="pearl">
-  <div class="sec">PRESSORS</div>
-  <table class="cmp">
-    <tr>
-      <th style="width:56%;">Drug &middot; Receptor &middot; Dose</th>
-      <th>Pearls</th>
-    </tr>
-    <tr>
-      <td><span class="num">1</span><span class="drug">Norepinephrine</span> <span class="brand">(Levophed)</span> <span class="mech">&alpha; &gt; &beta;</span><br><span class="dose">0.01&ndash;0.50 mcg/kg/min</span></td>
-      <td><span class="warn">&#9888; Ischemia (limbs, fingers)</span></td>
-    </tr>
-    <tr>
-      <td><span class="num">2</span><span class="drug">Vasopressin</span> <span class="mech">V&#8321; receptor</span><br><span class="dose">0.03&ndash;0.04 units/min</span></td>
-      <td><span class="pro">+ Not as pH dependent</span> <span class="pro">+ Levo sparing</span><br><span class="warn">&#9888; Mesenteric ischemia</span></td>
-    </tr>
-    <tr>
-      <td><span class="num">3</span><span class="drug">Phenylephrine</span> <span class="mech">&alpha; agonist</span></td>
-      <td><span class="good">Good for obstructive shock</span><br><span class="warn">&#9888; Reflex bradycardia</span></td>
-    </tr>
-    <tr>
-      <td><span class="num">4</span><span class="drug">Epinephrine</span> <span class="mech">&beta; &gt; &alpha;</span> &middot; &#8593; CO</td>
-      <td><span class="good">Good for bradycardic</span></td>
-    </tr>
-  </table>
+<div class="pearl e-prs">
+<style>
+.e-prs{--vio:#6d3a9e;--viobg:#f3ecfa;--al:#1d6fb8;--albg:#e8f1fa;--be:#c2410c;--bebg:#fdeee4;--v1:#0f766e;--v1bg:#e6f4f2;--da:#57534e;--dabg:#f0efed}
+@media (prefers-color-scheme:dark){.e-prs{--vio:#c9a6ef;--viobg:#2a1f3a;--al:#7fb8ea;--albg:#16283a;--be:#f0a071;--bebg:#3a2318;--v1:#5eead4;--v1bg:#123230;--da:#b8b2ac;--dabg:#2a2825}}
+.e-prs .key{display:flex;flex-wrap:wrap;gap:6px;align-items:center;font-size:.85em;color:var(--mut);margin:0 0 12px}
+.e-prs .rb{display:inline-block;font-weight:700;font-size:.85em;border-radius:6px;padding:1px 8px;white-space:nowrap}
+.e-prs .rb.a{color:var(--al);background:var(--albg)}
+.e-prs .rb.b{color:var(--be);background:var(--bebg)}
+.e-prs .rb.v{color:var(--v1);background:var(--v1bg)}
+.e-prs .rb.d{color:var(--da);background:var(--dabg)}
+.e-prs .hd{font-weight:800;letter-spacing:.05em;color:var(--vio);background:var(--viobg);border-radius:8px;padding:.45em .8em;margin:0 0 6px}
+.e-prs .hd.later{margin-top:18px}
+.e-prs .rung{display:grid;grid-template-columns:2.2em minmax(0,1.15fr) minmax(0,1fr);gap:2px 12px;padding:10px 2px;border-bottom:1.5px solid var(--line);align-items:start}
+.e-prs .rung:last-of-type{border-bottom:none}
+.e-prs .n{width:1.7em;height:1.7em;border-radius:50%;background:var(--vio);color:#fff;font-weight:800;font-size:.9em;display:flex;align-items:center;justify-content:center;margin-top:2px}
+.e-prs .dn{font-weight:800;color:var(--vio)}
+.e-prs .drugline{line-height:1.5}
+.e-prs .pearls{line-height:1.5}
+@media (max-width:560px){.e-prs .rung{grid-template-columns:2.2em minmax(0,1fr)}.e-prs .pearls{grid-column:2}}
+</style>
 
-  <div class="sec later">OTHER AGENTS (SOAP II)</div>
-  <div class="strip"><span class="lab">Dopamine:</span> &lt;3 = &ldquo;renal&rdquo; | 3&ndash;10 = &beta; | 10&ndash;20 = &alpha; <span class="warn">&#9888; Arrhythmias</span></div>
-  <div class="strip"><span class="lab">Dobutamine:</span> <span class="mech">&beta;&#8321;+&beta;&#8322; agonist</span> &middot; normal SVR &middot; shorter half life &middot; arrhythmogenic</div>
-  <div class="strip"><span class="lab">Milrinone:</span> <span class="mech">PDE inhibitor</span> &middot; &#8595; SVR, vasodilatory &middot; renally cleared &middot; less arrhythmogenic</div>
-  <div class="banner"><strong>Also:</strong> Angiotensin II &middot; Methylene blue</div>
+  <div class="key"><span class="mut">Receptor activity:</span> <span class="rb a">α</span> <span class="rb b">β</span> <span class="rb v">V₁</span></div>
+
+  <div class="hd">PRESSORS — IN ORDER</div>
+  <div class="rung">
+    <span class="n">1</span>
+    <div class="drugline"><span class="dn">Norepinephrine</span> <span class="brand">(Levophed)</span> <span class="rb a">α</span>&nbsp;&gt;&nbsp;<span class="rb b">β</span><br><span class="dose">0.01–0.50 mcg/kg/min</span></div>
+    <div class="pearls"><span class="warn">⚠ Ischemia (limbs, fingers)</span></div>
+  </div>
+  <div class="rung">
+    <span class="n">2</span>
+    <div class="drugline"><span class="dn">Vasopressin</span> <span class="rb v">V₁ receptor</span><br><span class="dose">0.03–0.04 units/min</span></div>
+    <div class="pearls"><span class="good">+ Not as pH dependent</span> <span class="good">+ Levo sparing</span><br><span class="warn">⚠ Mesenteric ischemia</span></div>
+  </div>
+  <div class="rung">
+    <span class="n">3</span>
+    <div class="drugline"><span class="dn">Phenylephrine</span> <span class="rb a">α agonist</span></div>
+    <div class="pearls"><span class="good">Good for obstructive shock</span><br><span class="warn">⚠ Reflex bradycardia</span></div>
+  </div>
+  <div class="rung">
+    <span class="n">4</span>
+    <div class="drugline"><span class="dn">Epinephrine</span> <span class="rb b">β</span>&nbsp;&gt;&nbsp;<span class="rb a">α</span> · ↑ CO</div>
+    <div class="pearls"><span class="good">Good for bradycardic</span></div>
+  </div>
+
+  <div class="hd later">OTHER AGENTS (SOAP II)</div>
+  <div class="strip"><span class="dn">Dopamine</span> — <span class="rb d">&lt;3 “renal”</span> <span class="rb b">3–10 β</span> <span class="rb a">10–20 α</span> <span class="warn">⚠ Arrhythmias</span></div>
+  <div class="strip"><span class="dn">Dobutamine</span> — <span class="rb b">β₁+β₂ agonist</span> · normal SVR · shorter half life · arrhythmogenic</div>
+  <div class="strip"><span class="dn">Milrinone</span> — <span class="rb d">PDE inhibitor</span> · ↓ SVR, vasodilatory · renally cleared · less arrhythmogenic</div>
+  <div class="banner"><strong>Also:</strong> Angiotensin II · Methylene blue</div>
 </div>

@@ -1,22 +1,34 @@
-<div class="pearl">
-  <div class="sec">CLINICAL TOPICS &amp; PATIENT EDUCATION</div>
-  <div class="strip"><span class="code">MGWMBARIATRICSURGERYGROUP</span> &mdash; Bariatric surgery group information</div>
-  <div class="strip"><span class="code">MGWMBMDTESTCRITERIA</span> &mdash; Bone mineral density testing considerations</div>
-  <div class="strip"><span class="code">MGWMPROTEINEXAMPLES</span> &mdash; Protein intake examples</div>
-  <div class="strip"><span class="code">MGWMCONSTIP</span> &mdash; Tips for managing constipation with GLP-1</div>
-  <div class="strip"><span class="code">MGWMPSHAKE</span> &mdash; Protein shakes we recommend</div>
-  <div class="strip"><span class="code">MGWMCRUISINGTIPS</span> &mdash; How to maintain your weight while on a cruise</div>
+<div class="pearl e-wmd">
+<style>
+.e-wmd{--t:#0f766e;--tbg:#e6f4f2;--dash:#cfe5e1}
+@media (prefers-color-scheme:dark){.e-wmd{--t:#5eead4;--tbg:#123230;--dash:#2a4340}}
+.e-wmd .grp{font-size:.78em;font-weight:800;letter-spacing:.1em;text-transform:uppercase;color:var(--t);margin:0 0 6px}
+.e-wmd .grp.later{margin-top:18px}
+.e-wmd .row{display:grid;grid-template-columns:minmax(170px,max-content) 1fr;gap:2px 16px;padding:5px 0;border-bottom:1px dashed var(--dash);align-items:baseline}
+.e-wmd .row:last-of-type{border-bottom:none}
+.e-wmd .dp{font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-weight:700;font-size:.82em;color:var(--t);background:var(--tbg);border-radius:6px;padding:.1em .55em;white-space:nowrap;justify-self:start}
+.e-wmd .ds{line-height:1.4}
+@media (max-width:560px){.e-wmd .row{grid-template-columns:1fr}}
+</style>
 
-  <div class="sec later">MEDICATION INSTRUCTIONS &amp; COVERAGE</div>
-  <div class="strip"><span class="code">MGWMKWIKPENINSTRUCTIONS</span> &mdash; Using Zepbound Kwikpen</div>
-  <div class="strip"><span class="code">MGWMBRIDGEPROGRAMMEDICARE</span> &mdash; Prior authorization outline</div>
-  <div class="strip"><span class="code">MGWMMEDCOVGLP50</span> &mdash; Medicare Bridge program</div>
-  <div class="strip"><span class="code">MGWMPOWEGOVY</span> &mdash; Wegovy information</div>
+  <div class="grp">Clinical Topics &amp; Patient Education</div>
+  <div class="row"><span class="dp">.MGWMBARIATRICSURGERYGROUP</span><span class="ds">Bariatric surgery group information</span></div>
+  <div class="row"><span class="dp">.MGWMBMDTESTCRITERIA</span><span class="ds">Bone mineral density testing considerations</span></div>
+  <div class="row"><span class="dp">.MGWMPROTEINEXAMPLES</span><span class="ds">Protein intake examples</span></div>
+  <div class="row"><span class="dp">.MGWMCONSTIP</span><span class="ds">Tips for managing constipation with GLP-1</span></div>
+  <div class="row"><span class="dp">.MGWMPSHAKE</span><span class="ds">Protein shakes we recommend</span></div>
+  <div class="row"><span class="dp">.MGWMCRUISINGTIPS</span><span class="ds">How to maintain your weight while on a cruise</span></div>
 
-  <div class="sec later">MEDICATION-SPECIFIC PHRASES</div>
-  <div class="strip"><span class="code">WM + [medication name]</span> &mdash; Foundayo, Contrave, Qsymia, Saxenda, Wegovy, Zepbound</div>
-  <div class="strip"><span class="code">WMWEGOVYCAD</span> &mdash; Wegovy cardiovascular information</div>
-  <div class="strip"><span class="code">WMZEPBOUNDOSA</span> &mdash; Zepbound for obstructive sleep apnea</div>
+  <div class="grp later">Medication Instructions &amp; Coverage</div>
+  <div class="row"><span class="dp">.MGWMKWIKPENINSTRUCTIONS</span><span class="ds">Using Zepbound Kwikpen</span></div>
+  <div class="row"><span class="dp">.MGWMBRIDGEPROGRAMMEDICARE</span><span class="ds">Prior authorization outline</span></div>
+  <div class="row"><span class="dp">.MGWMMEDCOVGLP50</span><span class="ds">Medicare Bridge program</span></div>
+  <div class="row"><span class="dp">.MGWMPOWEGOVY</span><span class="ds">Wegovy information</span></div>
 
-  <div class="banner" style="margin-top:22px;"><strong>Usage:</strong> type the dot phrase preceded by a period in your EHR note to auto-populate standardized text</div>
+  <div class="grp later">Medication-Specific Phrases</div>
+  <div class="row"><span class="dp">.WM + [medication]</span><span class="ds">Foundayo, Contrave, Qsymia, Saxenda, Wegovy, Zepbound</span></div>
+  <div class="row"><span class="dp">.WMWEGOVYCAD</span><span class="ds">Wegovy cardiovascular information</span></div>
+  <div class="row"><span class="dp">.WMZEPBOUNDOSA</span><span class="ds">Zepbound for obstructive sleep apnea</span></div>
+
+  <div class="banner" style="margin-top:18px;"><strong>Usage:</strong> type the dot phrase preceded by a period in your EHR note to auto-populate standardized text</div>
 </div>

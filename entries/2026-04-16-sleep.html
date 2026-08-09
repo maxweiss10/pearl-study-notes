@@ -1,35 +1,63 @@
-<div class="pearl">
-  <div class="sec">ENVIRONMENT</div>
-  <div class="strip"><span class="lab">&#8595; Interruptions:</span> vitals &middot; alarms &middot; blood draws &middot; meds <span class="mut">(diuretics, overnight admin)</span></div>
-  <div class="strip"><span class="lab">Night is Night &mdash; promote sleep:</span> make a bedtime &middot; TV + lights off &middot; blankets &middot; eye masks, ear plugs &middot; noisy neighbors &middot; warm milk, tea</div>
-  <div class="strip"><span class="lab">Day is Day:</span> lights on &middot; blinds up &middot; &#8595; naps &middot; OOB / mobilize &middot; eating!</div>
-  <div class="banner"><span class="mut" style="font-style:italic;">EVERYONE:</span> <strong>Melatonin @1800</strong></div>
+<div class="pearl e-slp">
+<style>
+.e-slp{--nbg:#232c4e;--nink:#e8ecf8;--nacc:#f5d76e;--dbg:#fdf6df;--dink:#4a3b12;--dacc:#b45309;--pro:#15803d;--probg:#e9f5ec;--con:#b3372f;--conbg:#fdeaea}
+@media (prefers-color-scheme:dark){.e-slp{--nbg:#1b2340;--nink:#dfe6f8;--nacc:#f5d76e;--dbg:#3a2c14;--dink:#f0e3c0;--dacc:#f2c26b;--pro:#7fc796;--probg:#17322a;--con:#f09a92;--conbg:#3a2126}}
+.e-slp .daynight{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin:10px 0 12px}
+.e-slp .panel{border-radius:12px;padding:12px 14px;line-height:1.5}
+.e-slp .night{background:var(--nbg);color:var(--nink)}
+.e-slp .night .h{color:var(--nacc)}
+.e-slp .day{background:var(--dbg);color:var(--dink)}
+.e-slp .day .h{color:var(--dacc)}
+.e-slp .h{font-weight:800;letter-spacing:.05em;margin:0 0 6px}
+.e-slp th{background:var(--bar-bg);color:var(--bar-ink);font-size:.78em;padding:.45em .7em;text-align:left;letter-spacing:.04em}
+.e-slp th.p{background:var(--probg);color:var(--pro)}
+.e-slp th.c{background:var(--conbg);color:var(--con)}
+.e-slp table{width:100%;border-collapse:collapse}
+.e-slp td{padding:.5em .7em;border-bottom:1.5px solid var(--line);vertical-align:top;line-height:1.4}
+.e-slp .dn{font-weight:800;color:var(--accent)}
+@media (max-width:560px){.e-slp .daynight{grid-template-columns:1fr}}
+</style>
 
-  <div class="sec later">MEDICATIONS</div>
-  <table class="cmp">
+  <div class="strip"><span class="lab">↓ Interruptions:</span> vitals · alarms · blood draws · meds <span class="mut">(diuretics, overnight admin)</span></div>
+
+  <div class="daynight">
+    <div class="panel night">
+      <div class="h">☾ NIGHT IS NIGHT — PROMOTE SLEEP</div>
+      make a bedtime · TV + lights off · blankets · eye masks, ear plugs · noisy neighbors · warm milk, tea
+    </div>
+    <div class="panel day">
+      <div class="h">☀ DAY IS DAY</div>
+      lights on · blinds up · ↓ naps · OOB / mobilize · eating!
+    </div>
+  </div>
+
+  <div class="banner"><em class="mut">EVERYONE:</em> <strong>Melatonin @1800</strong></div>
+
+  <div class="tblwrap" style="margin-top:14px;"><table>
+    <tr><th style="width:24%;">Drug / Dose</th><th class="p">+ Pro</th><th class="c">– Con</th></tr>
     <tr>
-      <th style="width:29%;">Drug / Dose</th>
-      <th>Pearls &nbsp;<span style="font-weight:400;">(<span style="color:#a8d5b5;">+ pro</span> &nbsp;<span style="color:#f0b8b8;">&ndash; con</span>)</span></th>
+      <td><span class="dn">Suvorexant</span><br><span class="dose">10 mg</span></td>
+      <td>Ok for many pts! Few med S/Es · helps in delirium</td>
+      <td>Minimal · cost as outpt</td>
     </tr>
     <tr>
-      <td><span class="drug">Suvorexant</span><br><span class="dose">10 mg</span></td>
-      <td><span class="pro">+ Ok for many pts! Few med S/Es &middot; helps in delirium</span><br><span class="con">&ndash; Minimal &middot; cost as outpt</span></td>
+      <td><span class="dn">Trazodone</span><br><span class="dose">25–100 mg</span></td>
+      <td>Ok for many pts! Ok for L/K · few side effects</td>
+      <td>AMS</td>
     </tr>
     <tr>
-      <td><span class="drug">Trazodone</span><br><span class="dose">25&ndash;100 mg</span></td>
-      <td><span class="pro">+ Ok for many pts! Ok for L/K &middot; few side effects</span><br><span class="con">&ndash; AMS</span></td>
+      <td><span class="dn">Mirtazapine</span><br><span class="dose">7.5–15 mg</span></td>
+      <td>Benefits for elderly, ↓ appetite · Ok for L/K · 2nd choice</td>
+      <td>May take longer to take effect</td>
     </tr>
     <tr>
-      <td><span class="drug">Mirtazapine</span><br><span class="dose">7.5&ndash;15 mg</span></td>
-      <td><span class="pro">+ Benefits for elderly, &#8595; appetite &middot; Ok for L/K &middot; 2nd choice</span><br><span class="con">&ndash; May take longer to take effect</span></td>
+      <td><span class="dn">Seroquel</span><br><span class="dose">12.5 mg</span></td>
+      <td>Helps with agitation, delirium</td>
+      <td>Ask psych first</td>
     </tr>
     <tr>
-      <td><span class="drug">Seroquel</span><br><span class="dose">12.5 mg</span></td>
-      <td><span class="pro">+ Helps with agitation, delirium</span><br><span class="con">&ndash; Ask psych first</span></td>
+      <td class="cell-avoid"><span class="dn avoid">Ambien / Benzos</span><br><strong class="avoid">AVOID</strong></td>
+      <td class="cell-avoid" colspan="2">Very well pts <strong>IF</strong> home med · <span class="con">any co-morbs</span></td>
     </tr>
-    <tr>
-      <td class="cell-avoid"><span class="drug avoid">Ambien / Benzos</span><br><strong class="avoid">AVOID</strong></td>
-      <td class="cell-avoid">Very well pts <strong>IF</strong> home med <span class="con">&middot; any co-morbs</span></td>
-    </tr>
-  </table>
+  </table></div>
 </div>

@@ -1,28 +1,50 @@
-<div class="pearl">
+<div class="pearl e-abc">
+<style>
+.e-abc{--red:#b3372f;--redl:#fdeaea;--act:#fdf3e4;--acttx:#8a4a0a}
+@media (prefers-color-scheme:dark){.e-abc{--red:#f09a92;--redl:#3a2126;--act:#3a2c14;--acttx:#f2c26b}}
+.e-abc .colhead{display:grid;grid-template-columns:2.7em minmax(0,1.05fr) minmax(0,1fr);gap:0 14px;font-size:.72em;font-weight:800;letter-spacing:.1em;text-transform:uppercase;color:var(--mut2);margin:0 0 4px}
+.e-abc .r{display:grid;grid-template-columns:2.7em minmax(0,1.05fr) minmax(0,1fr);gap:4px 14px;padding:10px 0;border-bottom:1.5px solid var(--line);align-items:start}
+.e-abc .r:last-of-type{border-bottom:none}
+.e-abc .L{width:2em;height:2em;border-radius:9px;background:var(--red);color:#fff;font-weight:900;font-size:1.05em;display:flex;align-items:center;justify-content:center}
+.e-abc .as{line-height:1.45}
+.e-abc .as .w{font-weight:800}
+.e-abc .do{background:var(--act);color:var(--acttx);border-radius:9px;padding:8px 11px;line-height:1.45}
+.e-abc .do .mut{color:inherit;opacity:.75}
+.e-abc .wide{grid-column:2/4}
+@media (max-width:560px){
+  .e-abc .colhead{display:none}
+  .e-abc .r{grid-template-columns:2.7em minmax(0,1fr)}
+  .e-abc .do{grid-column:2}
+  .e-abc .do::before{content:"DO → ";font-weight:800;font-size:.78em;letter-spacing:.06em}
+  .e-abc .wide{grid-column:2}
+}
+</style>
+
   <div class="note">Start at the end of the bedogram</div>
-  <table class="cmp">
-    <tr>
-      <th style="width:49%;">Assess</th>
-      <th>Intervene</th>
-    </tr>
-    <tr>
-      <td><span class="num">A</span><span class="drug">Airway</span><br>Color &middot; are they talking to you?</td>
-      <td><span class="mut">Airway concern:</span><br><span class="warn">Call for help STAT &mdash; RICU</span></td>
-    </tr>
-    <tr>
-      <td><span class="num">B</span><span class="drug">Breathing</span><br>RR, O&#8322; sats + O&#8322; requirement &middot; WOB &middot; talking in full sentences &middot; lung sounds</td>
-      <td>O&#8322;: NC, NRB, HFNC, NIV<br>CXR &middot; VBG/ABG &middot; <strong>call RT</strong></td>
-    </tr>
-    <tr>
-      <td><span class="num">C</span><span class="drug">Circulation</span><br>HR, BP &middot; CRT &middot; warm/cold &middot; JVP &middot; heart sounds &middot; edema &middot; UOP</td>
-      <td>EKG &middot; get reliable access<br>Labs: POCT glucose, CBC, BMP, LFT, lactate, coags <span class="mut">(blood cultures, troponin, d-dimer, type &amp; screen)</span><br>Fluid / blood product / pressors / inotropes / antibiotics</td>
-    </tr>
-    <tr>
-      <td><span class="num">D</span><span class="drug">Disability</span><br>Blood glucose &middot; GCS &middot; pupils &middot; moving all extremities</td>
-      <td>Code Stroke &middot; STAT CT &middot; <span style="white-space:nowrap;">?Narcan</span></td>
-    </tr>
-    <tr>
-      <td colspan="2"><span class="num">E</span><span class="drug">Everything else</span><br>Temp &middot; examine everything else &middot; detailed hx + chart dig</td>
-    </tr>
-  </table>
+  <div class="colhead"><span></span><span>Assess</span><span>Intervene</span></div>
+
+  <div class="r">
+    <span class="L">A</span>
+    <div class="as"><span class="w">Airway</span> — color · are they talking to you?</div>
+    <div class="do"><span class="mut">Airway concern:</span> <strong>Call for help STAT — RICU</strong></div>
+  </div>
+  <div class="r">
+    <span class="L">B</span>
+    <div class="as"><span class="w">Breathing</span> — RR, O₂ sats + O₂ requirement · WOB · talking in full sentences · lung sounds</div>
+    <div class="do">O₂: NC, NRB, HFNC, NIV · CXR · VBG/ABG · <strong>call RT</strong></div>
+  </div>
+  <div class="r">
+    <span class="L">C</span>
+    <div class="as"><span class="w">Circulation</span> — HR, BP · CRT · warm/cold · JVP · heart sounds · edema · UOP</div>
+    <div class="do">EKG · get reliable access · labs: POCT glucose, CBC, BMP, LFT, lactate, coags <span class="mut">(blood cultures, troponin, d-dimer, type &amp; screen)</span> · fluid / blood product / pressors / inotropes / antibiotics</div>
+  </div>
+  <div class="r">
+    <span class="L">D</span>
+    <div class="as"><span class="w">Disability</span> — blood glucose · GCS · pupils · moving all extremities</div>
+    <div class="do">Code Stroke · STAT CT · <span style="white-space:nowrap;">?Narcan</span></div>
+  </div>
+  <div class="r">
+    <span class="L">E</span>
+    <div class="as wide"><span class="w">Everything else</span> — temp · examine everything else · detailed hx + chart dig</div>
+  </div>
 </div>

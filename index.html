@@ -23,15 +23,28 @@
   <div class="wrap">
     <input id="q" type="search" placeholder="Search titles, keywords, text…" autocomplete="off" autocapitalize="none" spellcheck="false" aria-label="Search entries">
     <div class="chips" id="chips"></div>
+    <details id="tocm" class="tocm">
+      <summary>Contents</summary>
+      <div id="tocm-list"></div>
+    </details>
   </div>
 </div>
 
-<main class="wrap" id="list"></main>
-<p class="empty wrap" id="empty" hidden>No entries match.</p>
+<div class="layout wrap">
+  <nav id="toc" class="toc" aria-label="Table of contents"></nav>
+  <div class="maincol">
+    <main id="list"></main>
+    <p class="empty" id="empty" hidden>No entries match.</p>
+  </div>
+</div>
 
 <footer class="wrap foot">
-  <span>Add entries with <span class="code">/pearl</span> in Claude Code — no API, no cost.</span>
-  <a href="https://docs.google.com/document/d/1N8egmcK1GHmA6VPiwi2uGR71VcNt8Ve-M-tMkczFMjc/edit" target="_blank" rel="noopener">Legacy Google Doc archive ↗</a>
+  <span>Add entries with <span class="code">/pearls</span> in Claude Code — no API, no cost.</span>
+  <span>
+    <a href="https://maxweiss10.github.io/whitebook/pdfjs/web/viewer.html?file=../../whitebook.pdf" target="_blank" rel="noopener">White Book ↗</a>
+    &nbsp;·&nbsp;
+    <a href="https://docs.google.com/document/d/1N8egmcK1GHmA6VPiwi2uGR71VcNt8Ve-M-tMkczFMjc/edit" target="_blank" rel="noopener">Legacy doc archive ↗</a>
+  </span>
 </footer>
 
 <script src="app.js"></script>

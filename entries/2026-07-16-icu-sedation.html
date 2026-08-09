@@ -1,36 +1,53 @@
-<div class="pearl">
-  <div class="sec">SEDATION</div>
-  <table class="cmp">
-    <tr>
-      <th style="width:48%;">Drug / Dose</th>
-      <th>Pearls</th>
-    </tr>
-    <tr>
-      <td><span class="star">&#9733;</span> <span class="drug">Propofol</span> &nbsp;<span class="dose">TGs 400&ndash;500</span></td>
-      <td>Quick on/off &middot; <span class="con">hypotension</span><br><span class="warn">&#9888; PRIS: acidosis, rhabdo, bradycardia &middot; green urine</span></td>
-    </tr>
-    <tr>
-      <td><span class="drug">Dexmedetomidine</span> <span class="brand">(Precedex)</span><br><span class="dose">0.2&ndash;1.4 mcg/kg/hr</span></td>
-      <td>Bradycardia, hypotension &middot; agitated delirium<br><span class="good">Less respiratory depression</span></td>
-    </tr>
-    <tr>
-      <td><span class="drug">Midazolam</span> <span class="brand">(Versed)</span> &nbsp;<span class="dose">2&ndash;20 mg/hr</span></td>
-      <td>Neutral BP &middot; builds in fat stores<br><span class="warn">ICU delirium</span> <span class="warn">Tolerance</span></td>
-    </tr>
-    <tr>
-      <td><span class="drug">Ketamine</span> &nbsp;<span class="dose">&le;25 mg/hr</span></td>
-      <td>Emergence reaction &middot; transient &#8593;HR/BP<br><span class="good">Sedation + analgesia</span> <span class="good">&#10003; SVR preserved</span></td>
-    </tr>
-  </table>
+<div class="pearl e-sed">
+<style>
+.e-sed{--ind:#4f46e5;--indbg:#edecfc;--tea:#0f766e;--teabg:#e6f4f2;--ros:#be3a5f;--rosbg:#fbeaef}
+@media (prefers-color-scheme:dark){.e-sed{--ind:#a5b4fc;--indbg:#232449;--tea:#5eead4;--teabg:#123230;--ros:#f0a3bc;--rosbg:#3a1f29}}
+.e-sed .ph{display:flex;align-items:center;gap:10px;font-weight:800;letter-spacing:.05em;border-radius:8px;padding:.45em .8em;margin:0 0 10px}
+.e-sed .ph.later{margin-top:20px}
+.e-sed .ph.sed{color:var(--ind);background:var(--indbg)}
+.e-sed .ph.ana{color:var(--tea);background:var(--teabg)}
+.e-sed .ph.par{color:var(--ros);background:var(--rosbg)}
+.e-sed table{width:100%;border-collapse:collapse}
+.e-sed th{background:var(--indbg);color:var(--ind);font-size:.78em;padding:.45em .7em;text-align:left;letter-spacing:.04em}
+.e-sed td{padding:.55em .7em;border-bottom:1.5px solid var(--line);vertical-align:top;line-height:1.4}
+.e-sed .dn{font-weight:800;color:var(--ind)}
+.e-sed .ana .lab{color:var(--tea)}
+.e-sed .par .lab{color:var(--ros)}
+</style>
 
-  <div class="sec later">ANALGESIA</div>
-  <div class="note">Consider bowel regimen + methadone taper</div>
-  <div class="strip"><span class="lab">Fentanyl:</span> <span class="dose">25&ndash;200 mcg/hr</span> <span class="good">neutral BP</span></div>
-  <div class="strip"><span class="lab">Dilaudid</span> <span class="brand">(hydromorphone)</span> &middot; hepatic &middot; hypotension <span class="good">good for opioid tolerant pts</span></div>
-  <div class="strip"><span class="lab">Morphine:</span> renal &middot; hypotension &middot; anxiolytic, air hunger <span class="good">comfort care</span></div>
+  <div class="ph sed">SEDATION</div>
+  <div class="tblwrap"><table>
+    <tr><th style="width:44%;">Drug / Dose</th><th>Pearls</th></tr>
+    <tr>
+      <td><span class="star">★</span> <span class="dn">Propofol</span> &nbsp;<span class="dose">TGs 400–500</span></td>
+      <td>Quick on/off · <span class="con">hypotension</span><br><span class="warn">⚠ PRIS: acidosis, rhabdo, bradycardia · green urine</span></td>
+    </tr>
+    <tr>
+      <td><span class="dn">Dexmedetomidine</span> <span class="brand">(Precedex)</span><br><span class="dose">0.2–1.4 mcg/kg/hr</span></td>
+      <td>Bradycardia, hypotension · agitated delirium<br><span class="good">Less respiratory depression</span></td>
+    </tr>
+    <tr>
+      <td><span class="dn">Midazolam</span> <span class="brand">(Versed)</span> &nbsp;<span class="dose">2–20 mg/hr</span></td>
+      <td>Neutral BP · builds in fat stores<br><span class="warn">ICU delirium</span> <span class="warn">Tolerance</span></td>
+    </tr>
+    <tr>
+      <td><span class="dn">Ketamine</span> &nbsp;<span class="dose">≤25 mg/hr</span></td>
+      <td>Emergence reaction · transient ↑HR/BP<br><span class="good">Sedation + analgesia</span> <span class="good">✓ SVR preserved</span></td>
+    </tr>
+  </table></div>
 
-  <div class="sec later">PARALYSIS</div>
-  <div class="strip"><span class="lab">Monitoring:</span> <strong>ACURASYS</strong> <span class="mut">&ndash; mortality</span> &middot; <strong>ROSE</strong> &middot; <strong>V/V</strong> <span class="mut">&ndash; sedated</span> &middot; <strong>TOF</strong> <span class="mut">&ndash; &ldquo;train of four&rdquo;</span> &middot; <strong>BIS</strong> <span class="warn">&#9888; ICU myopathy</span></div>
-  <div class="strip"><span class="lab">Cisatracurium</span> <span class="brand">(Nimbex)</span> <span class="dose">0.15&ndash;0.20 mg/kg/hr</span></div>
-  <div class="strip"><span class="lab">Rocuronium</span> <span class="brand">(Zemuron)</span> <span class="dose">0.6 mg/kg</span> &nbsp;&middot;&nbsp; <span class="lab">Vecuronium</span> <span class="brand">(Norcuron)</span></div>
+  <div class="ana">
+    <div class="ph ana later">ANALGESIA</div>
+    <div class="note">Consider bowel regimen + methadone taper</div>
+    <div class="strip"><span class="lab">Fentanyl:</span> <span class="dose">25–200 mcg/hr</span> <span class="good">neutral BP</span></div>
+    <div class="strip"><span class="lab">Dilaudid</span> <span class="brand">(hydromorphone)</span> · hepatic · hypotension <span class="good">good for opioid tolerant pts</span></div>
+    <div class="strip"><span class="lab">Morphine:</span> renal · hypotension · anxiolytic, air hunger <span class="good">comfort care</span></div>
+  </div>
+
+  <div class="par">
+    <div class="ph par later">PARALYSIS</div>
+    <div class="strip"><span class="lab">Monitoring:</span> <strong>ACURASYS</strong> <span class="mut">– mortality</span> · <strong>ROSE</strong> · <strong>V/V</strong> <span class="mut">– sedated</span> · <strong>TOF</strong> <span class="mut">– “train of four”</span> · <strong>BIS</strong> <span class="warn">⚠ ICU myopathy</span></div>
+    <div class="strip"><span class="lab">Cisatracurium</span> <span class="brand">(Nimbex)</span> <span class="dose">0.15–0.20 mg/kg/hr</span></div>
+    <div class="strip"><span class="lab">Rocuronium</span> <span class="brand">(Zemuron)</span> <span class="dose">0.6 mg/kg</span> &nbsp;·&nbsp; <span class="lab">Vecuronium</span> <span class="brand">(Norcuron)</span></div>
+  </div>
 </div>

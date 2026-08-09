@@ -1,5 +1,5 @@
 ---
-name: pearl
+name: pearls
 description: Pearl — the user's supplementary White Book, a searchable real-text study-notes site at maxweiss10.github.io/pearl-study-notes. Turns anything — chalktalk/slide photos, screenshots, paper or article URLs, YouTube videos, blocks of text, quick facts — into individually-optimized visual entries organized by medical sub-discipline. Understands free-form requests, no fixed syntax ("put these images together as-is", "make this text into a visual", "turn this video into a concise guide", "move X to cardiology", "fix the pressors entry"). Use for /pearls, /pearl, "add a pearl", "add to my study notes", or any request to capture, edit, reorganize, or regenerate study-note entries.
 argument-hint: <anything — images, URL, text, or an instruction in plain words>
 ---
