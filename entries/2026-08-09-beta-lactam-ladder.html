@@ -1,21 +1,55 @@
 <div class="pearl e-bla">
-  <div class="tblwrap"><table class="cmp">
-    <tr><th style="width:30%;">Class</th><th>No Pseudomonas</th><th>Covers Pseudomonas</th></tr>
-    <tr>
-      <td><b>1.</b> <span class="drug">Cephalosporins</span></td>
-      <td><b>CTX</b> <span class="brand">(ceftriaxone)</span></td>
-      <td><b>Cefepime</b> <span class="brand">(4th gen)</span></td>
-    </tr>
-    <tr>
-      <td><b>2.</b> <span class="drug">Combos (BL–BLI)</span></td>
-      <td><b>Unasyn</b> <span class="brand">(ampicillin–sulbactam)</span></td>
-      <td><b>Zosyn</b> <span class="brand">(pip-tazo)</span></td>
-    </tr>
-    <tr>
-      <td><b>3.</b> <span class="drug">Carbapenems</span></td>
-      <td><b>Ertapenem</b> <span class="brand">(“erta”)</span></td>
-      <td><b>Meropenem</b> <span class="brand">(“mero”)</span></td>
-    </tr>
-  </table></div>
-  <div class="strip" style="margin-top:8px;"><b>ESBL:</b> cephalosporins &amp; BL–BLI <span class="warn">not reliable — escalate to a carbapenem</span> · carbapenems: covered</div>
+<style>
+.e-bla{--bxbg:#f1f0e9;--bxbd:#dcd9cb;--gnbg:#e9f5ee;--gnbd:#c0dfcc;--gn:#1c6b4a;--rdbg:#fdeeea;--rdbd:#f0c4bd;--rd:#a33a35;--dash:#d3d3cd;--con:#9aa1a9}
+@media (prefers-color-scheme:dark){.e-bla{--bxbg:#26261f;--bxbd:#3b392c;--gnbg:#16302a;--gnbd:#2c5a48;--gn:#8fd0ae;--rdbg:#38231b;--rdbd:#6b3a2a;--rd:#e8a183;--dash:#454540;--con:#5a626c}}
+.e-bla .sheet{min-width:470px}
+.e-bla .cols{display:grid;grid-template-columns:repeat(3,1fr);gap:0 18px}
+.e-bla .ch{text-align:center;font-weight:700;color:var(--ink);padding:0 12px;margin-bottom:10px}
+.e-bla .band{position:relative;border:1.5px dashed var(--dash);border-radius:12px;padding:24px 12px 12px}
+.e-bla .bandlab{position:absolute;top:6px;left:13px;font-size:.72rem;color:var(--mut)}
+.e-bla .bx{border:1px solid var(--bxbd);background:var(--bxbg);border-radius:9px;padding:9px 6px;text-align:center;min-width:0}
+.e-bla .bx .n{font-weight:700;color:var(--ink)}
+.e-bla .bx .s{font-size:.82em;color:var(--mut)}
+.e-bla .bx.g{background:var(--gnbg);border-color:var(--gnbd)}
+.e-bla .bx.g .n{color:var(--gn)}
+.e-bla .bx.r{background:var(--rdbg);border-color:var(--rdbd)}
+.e-bla .bx.r .n{color:var(--rd)}
+.e-bla .bx.r .s{color:var(--rd)}
+.e-bla .darr{padding:0 12px;margin:2px 0}
+.e-bla .darr span{display:block;text-align:center;color:var(--con);font-size:1.15em;line-height:1.2}
+.e-bla .esbl{display:grid;grid-template-columns:2fr 40px 1fr;gap:0;align-items:center;margin-top:20px;padding:0 12px}
+.e-bla .esbl .harrow{display:flex;align-items:center;padding:0 6px}
+.e-bla .esbl .hl{flex:1;height:1.5px;background:var(--con)}
+.e-bla .esbl .ah{flex:none;width:0;height:0;border-top:4.5px solid transparent;border-bottom:4.5px solid transparent;border-left:6px solid var(--con)}
+</style>
+
+  <div class="tblwrap"><div class="sheet">
+    <div class="cols ch-row" style="padding:0 13.5px;"><div class="ch" style="padding:0;">1 · Cephalosporins</div><div class="ch" style="padding:0;">2 · Combos (BL–BLI)</div><div class="ch" style="padding:0;">3 · Carbapenems</div></div>
+
+    <div class="band">
+      <span class="bandlab">No Pseudomonas coverage</span>
+      <div class="cols">
+        <div class="bx"><div class="n">CTX</div><div class="s">ceftriaxone</div></div>
+        <div class="bx"><div class="n">Unasyn</div><div class="s">ampicillin–sulbactam</div></div>
+        <div class="bx"><div class="n">Ertapenem</div><div class="s">“erta”</div></div>
+      </div>
+    </div>
+
+    <div class="darr"><div class="cols"><span>↓</span><span>↓</span><span>↓</span></div></div>
+
+    <div class="band">
+      <span class="bandlab">Covers Pseudomonas</span>
+      <div class="cols">
+        <div class="bx g"><div class="n">Cefepime</div><div class="s">4th gen</div></div>
+        <div class="bx g"><div class="n">Zosyn</div><div class="s">pip-tazo</div></div>
+        <div class="bx g"><div class="n">Meropenem</div><div class="s">“mero”</div></div>
+      </div>
+    </div>
+
+    <div class="esbl">
+      <div class="bx r"><div class="n">ESBL: not reliable</div><div class="s">escalate to a carbapenem</div></div>
+      <div class="harrow"><span class="hl"></span><span class="ah"></span></div>
+      <div class="bx g"><div class="n">ESBL: covered</div></div>
+    </div>
+  </div></div>
 </div>

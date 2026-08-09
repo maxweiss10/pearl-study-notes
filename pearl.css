@@ -95,6 +95,7 @@ a:hover{text-decoration:underline}
   color:var(--mut); margin:26px 0 2px; scroll-margin-top:104px;
 }
 .sechead::after{content:""; flex:1; height:1px; background:var(--line2)}
+.sechead[hidden]{display:none}
 .sechead:first-child{margin-top:8px}
 .dot{display:none}
 

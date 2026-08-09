@@ -65,6 +65,7 @@ The register is Sanford Guide / Pocket Medicine, not slides. Typography, alignme
 - Directory → `.code` | description grid rows
 - Paper / video → `.eyebrow` source label + bold takeaway in `.ptext`
 - Raw photos → stacked `.photo` imgs with detailed searchable alt text
+- **Flow sheets (exception to the no-filled-boxes rule):** when the source is itself a flowchart/diagram the user made or asks for, recreate the sheet faithfully as real-text HTML — boxes, labeled arrow pills, dashed grouping bands, and the source's own semantic exit coloring (tinted outcome boxes allowed HERE only; scoped vars with dark variants; arrows via CSS lines/glyphs, never images) — do NOT flatten it into rows. Pattern references: `entries/2026-08-09-pleural-effusion.html`, `entries/2026-08-09-beta-lactam-ladder.html`.
 
 **Scoped `<style>` is the exception**, not the rule: only for a layout the primitives genuinely don't cover; every selector prefixed `.e-{short}`; layout properties only — never colors.
 
