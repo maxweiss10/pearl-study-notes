@@ -45,13 +45,15 @@ Legacy keywords (`raw`, `each`, `merge`, `merge-raw`, `paper`) still work but ar
 The register is Sanford Guide / Pocket Medicine, not slides. Typography, alignment, and position carry ALL hierarchy. **Grayscale print test:** if the entry's hierarchy would collapse printed in grayscale, redo it — hierarchy must be structural, not chromatic.
 
 **Color budget (strict)**
-- Grayscale by default. The site accent belongs to links and chrome — never inside entries.
-- Red (`.warn`) is reserved EXCLUSIVELY for clinical danger: toxicity, contraindication, do-not-miss. Nothing else is colored, so when something is red it lands.
+- Grayscale by default. Muted blue is for links only — never inside entries.
+- Red (`.warn`, deep oxblood) is reserved EXCLUSIVELY for clinical danger AND escalation actions — toxicity, contraindication, do-not-miss, "call RT", "call RICU", "escalate to a carbapenem". The whole class gets red; never split it between red and bold. Nothing else is colored, so when something is red it lands.
 - No filled bars/panels/pills/badges/coins/tiles, no shadows, no rounded boxes, no per-entry palettes, no decorative glyphs or emoji (no ⚠ ★ ☾ — red text IS the caution marker).
 
 **Scan anatomy** — every row same fixed slots, so the eye drops straight down a column:
 - drug/lead name in `<b>` · attributes plain or `.mut`/`.mech` · dose in `.dose` (tabular figures, units verbatim) · cautions LAST, in `.warn`
-- ordered items: plain bold `1.` / `A.` at text size, inline — never coins or tiles
+- ordered items: markers as `<b class="mk">1.</b>` / `<b class="mk">A.</b>` at text size — the site hangs them in a left gutter so wrapped lines align under the text, never under the marker. No coins or tiles.
+- separator convention: lead **—** details, items inside the details separated by `·` ("**Norepinephrine** (Levophed) — α > β"). Use the em dash everywhere a lead meets its detail; never a colon.
+- conditional/parenthetical asides in `.mut` (renders italic gray) — e.g. "(blood cultures, troponin, d-dimer, type & screen)"
 
 **Base primitives cover nearly everything** (`pearl.css`):
 `.sec` small-caps hairline section label (+`.later`) · `.caps` inline small-caps lead · `.strip` flow line · `.lab` bold lead-in · `.mut` `.mech` `.note` `.brand` gray secondary · `.row2` two-column hairline row (`.rule` adds a column divider; `.full` spans both; stacks automatically on phones with `.mlab` slot labels) · `.colhead2` small-caps column headers · `.duo` side-by-side halves · `table.cmp` hairline table (small-caps `th`, no zebra, wrap in `.tblwrap`) · `.dose` `.warn` `.drug` `.code` `.eyebrow` `.ptext` `.photo`

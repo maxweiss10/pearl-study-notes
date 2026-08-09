@@ -144,6 +144,7 @@
       ? shown + ' / ' + entries.length + ' entries'
       : entries.length + ' entries';
     $empty.hidden = shown !== 0;
+    if (typeof onScroll === 'function') onScroll();
 
     document.querySelectorAll('.chip').forEach(function (c) {
       c.classList.toggle('on', c.dataset.kw === q);
@@ -260,6 +261,44 @@
       if (target) target.scrollIntoView();
     }
   }
+
+  /* scroll-spy: sidebar active state + sticky context */
+  const $ctx = document.getElementById('ctx');
+  const $ctxSec = document.getElementById('ctx-sec');
+  const $ctxTitle = document.getElementById('ctx-title');
+  let spyTicking = false;
+  let activeLink = null;
+
+  function updateSpy() {
+    spyTicking = false;
+    let cur = null;
+    for (let i = 0; i < entries.length; i++) {
+      const e = entries[i];
+      if (e.card.hidden) continue;
+      if (e.card.getBoundingClientRect().top <= 130) cur = e;
+      else break;
+    }
+    const link = cur ? document.querySelector('#toc a[href="#' + cur.meta.id + '"]') : null;
+    if (activeLink && activeLink !== link) activeLink.classList.remove('active');
+    if (link && link !== activeLink) link.classList.add('active');
+    activeLink = link;
+    if ($ctx) {
+      if (cur) {
+        $ctxSec.textContent = cur.meta.section || '';
+        $ctxTitle.textContent = cur.meta.title;
+        $ctx.classList.add('show');
+      } else {
+        $ctx.classList.remove('show');
+      }
+    }
+  }
+  function onScroll() {
+    if (!spyTicking) {
+      spyTicking = true;
+      requestAnimationFrame(updateSpy);
+    }
+  }
+  window.addEventListener('scroll', onScroll, { passive: true });
 
   $q.addEventListener('input', onInput);
   $q.addEventListener('keydown', function (ev) {
