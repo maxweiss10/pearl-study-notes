@@ -1,129 +1,36 @@
-# Pearl — Study Notes Web App
+# Pearl — study notes
 
-Phone/browser-first companion to the Pearl Google Doc. Six capture modes:
+Searchable notebook of clinical pearls at **https://maxweiss10.github.io/pearl-study-notes/**.
 
-1. **Polished single image** — AI recreates the slide as a clean diagram, adds keywords
-2. **Raw single image** — inserts the photo as-is with your title and keywords
-3. **Multiple → separate entries** — each image becomes its own polished entry
-4. **Multiple → one merged polished entry** — AI combines the slides into a single visual
-5. **Multiple → one stacked raw entry** — photos stacked vertically, one entry
-6. **Paper URL → text entry** — AI extracts key finding, saves title + summary + keywords + link
+Every entry is **real text** in a shared design system — selectable, highlightable, Ctrl-F-able, instant-searchable — not a screenshot. The site is fully static: no API keys, no worker, no cost.
 
-Static frontend + a tiny Cloudflare Worker that hides the Apps Script secret and Anthropic API key. The existing `/add-note` CLI in Claude Code keeps working against the same backend.
+## How entries get added
 
----
+The `/pearl` skill in Claude Code (in `.claude/skills/pearl/`, also installed at `~/.claude/skills/`) does everything in-session:
 
-## Architecture
+- **photo of a chalktalk/slide** → recreated as a polished real-text entry (default)
+- **`raw` + photo(s)** → original photo(s) inserted, auto-titled and tagged
+- **multiple photos** → separate entries, one merged entry, or a raw stack
+- **paper URL (± your takeaway)** → text entry with source link
+- **plain text** → quick text pearl
+- **"fix the X entry"** → edits the fragment directly
 
-```
-Browser (GitHub Pages)
-   │
-   │  POST /polish  (modes 1, 3, 4) → Worker calls Anthropic vision
-   │  POST /paper   (mode 6)        → Worker fetches URL + Anthropic
-   │  POST /submit  (all modes)     → Worker injects secret, forwards to Apps Script
-   ▼
-Cloudflare Worker (free tier)
-   ▼
-Google Apps Script (V5, already deployed)
-   ▼
-Google Doc
-```
+The skill writes a fragment + manifest row, commits, and pushes; Pages redeploys in ~1 min. Works from a phone via a claude.ai/code session on this repo.
 
----
-
-## Setup
-
-### Prerequisites
-
-- Node.js (for `wrangler`)
-- An Anthropic API key (`sk-ant-...`) — note that API usage is billed separately from Claude Pro/Max
-- The existing Apps Script already deployed (you have this)
-- A GitHub account
-
-### 1. Deploy the Cloudflare Worker
-
-```bash
-# One-time install
-npm install -g wrangler
-
-cd worker
-wrangler login                     # opens browser to auth Cloudflare
-wrangler secret put ANTHROPIC_API_KEY
-wrangler secret put STUDY_NOTES_SECRET          # same value as in your ~/.zshrc
-wrangler secret put STUDY_NOTES_WEBAPP_URL      # the https://script.google.com/macros/s/.../exec URL
-wrangler secret put CLIENT_TOKEN                # pick any string; you'll put it in config.js too
-wrangler deploy
-```
-
-Wrangler prints the Worker URL, e.g. `https://pearl-study-notes.<your-subdomain>.workers.dev`. Copy it.
-
-### 2. Configure the frontend
-
-```bash
-cd ..
-cp config.example.js config.js
-# Edit config.js — set WORKER_URL, CLIENT_TOKEN, DOC_URL
-```
-
-`config.js` is gitignored so your Worker URL and token stay local to each deployment.
-
-### 3. Push to GitHub + enable Pages
-
-```bash
-gh repo create pearl-study-notes --public --source . --push
-gh repo edit --enable-pages --pages-branch main --pages-path /
-```
-
-Or manually: push to any GitHub repo, then Settings → Pages → Source: `main` branch, `/` root.
-
-Pages gives you a URL like `https://<user>.github.io/pearl-study-notes/`. Open on phone. Add to Home Screen.
-
-### 4. (Optional) Tighten CORS
-
-In `worker/src/index.js`, swap `"Access-Control-Allow-Origin": "*"` for your Pages origin. Works fine with `*` for personal use; the `CLIENT_TOKEN` check is the actual gate.
-
----
-
-## Cost
-
-- **Cloudflare Worker**: free tier (100k requests/day)
-- **GitHub Pages**: free
-- **Anthropic API**: pay-per-use. Polished entries use ~one vision call + one generation. Ballpark:
-  - Polished single entry: ~$0.02
-  - Paper URL: ~$0.005
-  - Raw modes: $0 (no AI calls)
-
----
-
-## Local development
-
-```bash
-cd worker
-wrangler dev            # local Worker on http://localhost:8787
-```
-
-Open `index.html` in a browser with `config.js` pointing at `http://localhost:8787`.
-
----
-
-## Files
+## Structure
 
 ```
-study-notes-web/
-├── index.html              main page
-├── app.js                  frontend logic
-├── style.css               mobile-first styles
-├── config.example.js       template for config.js (gitignored)
-├── .gitignore              excludes config.js
-├── worker/
-│   ├── src/index.js        Cloudflare Worker (/polish /paper /submit)
-│   ├── wrangler.toml       Worker config
-│   └── README.md           worker-specific notes (optional)
-└── README.md               this file
+index.html      shell: header, search, chips
+pearl.css       design system (light + dark) + site styles
+app.js          loads manifest + fragments, instant search with highlighting
+manifest.json   entry metadata, newest first
+entries/        one HTML fragment per entry (real text)
+entries/img/    photos for raw entries
 ```
 
----
+Fragments use only `pearl.css` classes (`.sec`, `.strip`, `table.cmp`, `.dose`, `.warn`, `.good`, …) so every entry stays consistent and theme-aware. Authoring rules live in the skill.
 
-## Relationship to `/add-note` CLI
+## History
 
-Both hit the same Apps Script endpoint. The CLI uses `~/.claude/scripts/study-note-upload.sh` with three modes (`render` / `raw` / `text`); the Web app uses the Worker which ultimately posts the same JSON shape. Either can add entries at the top of the Pearl doc.
+- **v1-v2** (Apr-Jul 2026): capture app + Cloudflare Worker (billed Anthropic API) rendering entries to PNGs pasted into a Google Doc — [archive doc](https://docs.google.com/document/d/1N8egmcK1GHmA6VPiwi2uGR71VcNt8Ve-M-tMkczFMjc/edit). Code in git history.
+- **v3** (Aug 2026): this — static real-text notebook + `/pearl` skill. All 12 doc entries migrated.

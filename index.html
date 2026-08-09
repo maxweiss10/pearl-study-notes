@@ -1,138 +1,39 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
-  <meta name="theme-color" content="#1a3a5c" />
-  <meta name="apple-mobile-web-app-capable" content="yes" />
-  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
-  <meta name="apple-mobile-web-app-title" content="Pearl" />
-  <meta http-equiv="cache-control" content="no-cache, no-store, must-revalidate" />
-  <meta http-equiv="pragma" content="no-cache" />
-  <meta http-equiv="expires" content="0" />
-  <link rel="apple-touch-icon" href="data:image/svg+xml;utf8,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 180 180'%3E%3Crect width='180' height='180' rx='38' fill='%231a3a5c'/%3E%3Ctext x='50%25' y='60%25' font-family='-apple-system,BlinkMacSystemFont,Helvetica' font-size='100' text-anchor='middle' fill='white'%3E%F0%9F%93%93%3C/text%3E%3C/svg%3E" />
-  <title>Pearl — Study Notes</title>
-
-  <!-- Build version is bumped on every deploy by ./bump.sh to force cache invalidation -->
-  <script>window.PEARL_BUILD="20260718-040630";</script>
-  <script>
-    // Rewrite all asset URLs with the build version
-    document.addEventListener("DOMContentLoaded", () => {});
-  </script>
-  <link rel="stylesheet" id="pearl-style" href="style.css" />
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Pearl — study notes</title>
+<meta name="theme-color" content="#1a3a5c">
+<meta name="apple-mobile-web-app-title" content="Pearl">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect width='100' height='100' rx='22' fill='%231a3a5c'/><circle cx='50' cy='54' r='26' fill='%23ffffff'/><circle cx='42' cy='46' r='9' fill='%23dfe6ee'/></svg>">
+<link rel="stylesheet" href="pearl.css">
 </head>
 <body>
-  <header class="topbar">
-    <h1>📓 Pearl</h1>
-    <a id="openDoc" href="#" target="_blank" rel="noopener">Open doc ↗</a>
-  </header>
+<header class="top wrap">
+  <div class="brand">
+    <svg viewBox="0 0 100 100" width="30" height="30" aria-hidden="true"><rect width="100" height="100" rx="22" fill="#1a3a5c"/><circle cx="50" cy="54" r="26" fill="#fff"/><circle cx="42" cy="46" r="9" fill="#dfe6ee"/></svg>
+    <h1>Pearl</h1>
+    <span class="sub">study notes</span>
+  </div>
+  <div class="count" id="count"></div>
+</header>
 
-  <main class="app">
+<div class="searchbar">
+  <div class="wrap">
+    <input id="q" type="search" placeholder="Search titles, keywords, text…" autocomplete="off" autocapitalize="none" spellcheck="false" aria-label="Search entries">
+    <div class="chips" id="chips"></div>
+  </div>
+</div>
 
-    <section class="card">
-      <label class="field">
-        <span class="label">Mode</span>
-        <select id="mode">
-          <option value="polished-single">Polished single image</option>
-          <option value="raw-single">Raw single image</option>
-          <option value="each">Multiple images → separate entries</option>
-          <option value="merge-polished">Multiple images → one merged polished entry</option>
-          <option value="merge-raw">Multiple images → one stacked raw entry</option>
-          <option value="paper">Paper URL → plain-text entry</option>
-        </select>
-      </label>
+<main class="wrap" id="list"></main>
+<p class="empty wrap" id="empty" hidden>No entries match.</p>
 
-      <div id="fileField" class="field">
-        <div class="field-header">
-          <span class="label">Images</span>
-          <button id="clearFilesBtn" type="button" class="link-btn hidden" title="Clear all">✕ Clear</button>
-        </div>
-        <div class="input-row">
-          <div id="dropZone" class="filedrop" tabindex="0" role="button" aria-label="Pick or drop images">
-            <span class="filedrop-hint">Tap to pick · drag · paste</span>
-          </div>
-          <div id="pasteZone" class="pastezone" tabindex="0" role="button" aria-label="Paste image here" title="Click, then Cmd+V">
-            <span class="pastezone-hint">📋<br/>Paste</span>
-          </div>
-        </div>
-        <input type="file" id="files" accept="image/*,.heic,.HEIC,.heif,.HEIF" multiple hidden />
-        <div id="fileList" class="filelist"></div>
-      </div>
+<footer class="wrap foot">
+  <span>Add entries with <span class="code">/pearl</span> in Claude Code — no API, no cost.</span>
+  <a href="https://docs.google.com/document/d/1N8egmcK1GHmA6VPiwi2uGR71VcNt8Ve-M-tMkczFMjc/edit" target="_blank" rel="noopener">Legacy Google Doc archive ↗</a>
+</footer>
 
-      <label id="urlField" class="field hidden">
-        <span class="label">Paper URL</span>
-        <input type="url" id="urlInput" placeholder="https://pubmed.ncbi.nlm.nih.gov/..." />
-      </label>
-      <label id="paperNotesField" class="field hidden">
-        <span class="label">Your takeaway <span class="label-hint">(optional)</span></span>
-        <textarea id="paperNotesInput" rows="4" placeholder="The main finding you care about, key quote, or your own note — will be included verbatim in the entry."></textarea>
-      </label>
-    </section>
-
-    <section id="previewSection" class="card hidden">
-      <div class="preview-header">
-        <span class="label">Preview</span>
-        <button id="regenerateBtn" class="link-btn" type="button" title="Re-generate">↻</button>
-      </div>
-      <div id="preview" class="preview"></div>
-      <label class="field">
-        <span class="label">Title</span>
-        <input type="text" id="titleInput" />
-      </label>
-      <label class="field">
-        <span class="label">Keywords</span>
-        <input type="text" id="keywordsInput" />
-      </label>
-      <label id="bodyField" class="field hidden">
-        <span class="label">Body text</span>
-        <textarea id="bodyInput" rows="6"></textarea>
-      </label>
-    </section>
-
-    <section class="actions">
-      <button id="generateBtn" class="primary" disabled>Loading…</button>
-      <button id="submitBtn" class="primary hidden" aria-hidden="true">Retry upload</button>
-      <div id="status" class="status"></div>
-    </section>
-
-    <!-- Diagnostic panel, toggled by tapping the footer version -->
-    <section id="diagPanel" class="card hidden diag">
-      <div class="diag-header">
-        <span class="label">Diagnostics</span>
-        <button id="diagCopy" class="link-btn" type="button" title="Copy diagnostics">📋</button>
-        <button id="diagClose" class="link-btn" type="button" title="Close">✕</button>
-      </div>
-      <pre id="diagBody"></pre>
-    </section>
-
-  </main>
-
-  <footer class="footer">
-    <span id="buildVersion" title="Tap to toggle diagnostics">build loading…</span>
-    <span id="config-notice"></span>
-  </footer>
-
-  <!-- Load libs BEFORE app.js so they're ready when ready-gate checks -->
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
-  <!-- heic2any: desktop HEIC decoder fallback. On iPhone Safari, createImageBitmap decodes HEIC natively and this is bypassed. -->
-  <script src="https://cdn.jsdelivr.net/npm/heic2any@0.0.4/dist/heic2any.min.js"></script>
-  <script>
-    // Version-bust the site-owned scripts so iterations don't get stuck on old CDN caches.
-    // CRITICAL: dynamically-inserted scripts default to async=true which means they can execute
-    // out of order. Setting async=false preserves document order.
-    (function () {
-      var v = window.PEARL_BUILD || String(Date.now());
-      var link = document.getElementById("pearl-style");
-      if (link) link.href = "style.css?v=" + v;
-      function load(src) {
-        var s = document.createElement("script");
-        s.src = src + "?v=" + v;
-        s.async = false;   // preserve order: config.js must finish before app.js
-        document.body.appendChild(s);
-      }
-      load("config.js");
-      load("app.js");
-    })();
-  </script>
+<script src="app.js"></script>
 </body>
 </html>

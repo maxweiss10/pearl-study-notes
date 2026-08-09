@@ -1,0 +1,76 @@
+[
+  {
+    "id": "2026-07-18-icu-pressors",
+    "title": "ICU Pressors & Inotropes",
+    "date": "2026-07-18",
+    "keywords": "pressors, vasopressors, inotropes, norepinephrine, levophed, vasopressin, phenylephrine, epinephrine, dopamine, dobutamine, milrinone, angiotensin ii, methylene blue, shock, icu, chalktalk"
+  },
+  {
+    "id": "2026-07-16-icu-sedation",
+    "title": "ICU Sedation, Analgesia & Paralysis",
+    "date": "2026-07-16",
+    "keywords": "sedation, analgesia, paralysis, paralytics, propofol, dexmedetomidine, precedex, midazolam, versed, ketamine, fentanyl, dilaudid, hydromorphone, morphine, cisatracurium, nimbex, rocuronium, vecuronium, train of four, icu, chalktalk"
+  },
+  {
+    "id": "2026-07-10-wm-dotphrases",
+    "title": "Weight Management Dot Phrases Reference",
+    "date": "2026-07-10",
+    "keywords": "dot phrases, weight management, obesity, glp-1, wegovy, zepbound, semaglutide, tirzepatide, contrave, qsymia, saxenda, bariatric surgery, epic, ehr, slide"
+  },
+  {
+    "id": "2026-07-10-wm-insurance",
+    "title": "Weight Management Insurance Coverage",
+    "date": "2026-07-10",
+    "keywords": "weight management, obesity, glp-1, insurance coverage, prior authorization, bmi, medicare, medi-cal, commercial insurance, novocare, lillydirect, compounding pharmacy, slide"
+  },
+  {
+    "id": "2026-07-09-shoulder-exam",
+    "title": "Essential Shoulder Examination",
+    "date": "2026-07-09",
+    "keywords": "shoulder exam, shoulder examination, rotator cuff, impingement, hawkins test, neer's test, empty can test, belly press test, infraspinatus, ac joint, biceps tendon, range of motion, musculoskeletal, physical exam, slide"
+  },
+  {
+    "id": "2026-07-09-knee-exam",
+    "title": "Essential Knee Exam",
+    "date": "2026-07-09",
+    "keywords": "knee exam, knee examination, patellofemoral pain, osteoarthritis, oa, meniscus tear, mcmurray test, lachman test, acl, mcl, lcl, pcl, physical exam, slide"
+  },
+  {
+    "id": "2026-05-12-antiarrhythmic-guide",
+    "title": "Antiarrhythmic Drugs Guide",
+    "date": "2026-05-12",
+    "keywords": "antiarrhythmic drugs, arrhythmia, antiarrhythmics, cardiac drugs, heart rhythm, atrial fibrillation, ventricular tachycardia, class i, class ii, class iii, class iv, amiodarone, beta-blockers, calcium channel blockers, paper",
+    "source": "https://x.com/ph_lamaalghamdi/status/2053891808153809358?s=46"
+  },
+  {
+    "id": "2026-04-16-abcde",
+    "title": "ABCDE Approach to Unwell Patient",
+    "date": "2026-04-16",
+    "keywords": "abcde, rapid assessment, unwell patient, deteriorating patient, airway, breathing, circulation, disability, rapid response, ricu, gcs, glasgow coma scale, slide"
+  },
+  {
+    "id": "2026-04-16-metoprolol-mnemonic",
+    "title": "Metoprolol Formulations Mnemonic",
+    "date": "2026-04-16",
+    "keywords": "metoprolol, tartrate, succinate, short acting, long acting, beta blocker, mnemonic, dosing"
+  },
+  {
+    "id": "2026-04-16-calcium-albumin",
+    "title": "Calcium-Albumin Correction Validity",
+    "date": "2026-04-16",
+    "keywords": "calcium, albumin, correction formula, hypocalcemia, ionized calcium, serum albumin, diagnostic accuracy, electrolyte, laboratory testing, clinical chemistry, corrected calcium, total calcium, critical care, paper",
+    "source": "https://jamanetwork.com/journals/jamanetworkopen/fullarticle/2829419"
+  },
+  {
+    "id": "2026-04-16-sleep",
+    "title": "Inpatient Sleep Management",
+    "date": "2026-04-16",
+    "keywords": "insomnia, sleep, melatonin, suvorexant, belsomra, trazodone, mirtazapine, remeron, quetiapine, seroquel, zolpidem, ambien, benzodiazepines, delirium, inpatient, slide"
+  },
+  {
+    "id": "2026-04-16-pain",
+    "title": "Inpatient Pain Management Ladder",
+    "date": "2026-04-16",
+    "keywords": "pain management, analgesic ladder, acetaminophen, tylenol, ibuprofen, nsaids, ketorolac, tramadol, codeine, oxycodone, hydromorphone, morphine, inpatient, slide"
+  }
+]
