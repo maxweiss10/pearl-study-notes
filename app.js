@@ -264,6 +264,9 @@
       $tocmList.addEventListener('click', function (ev) {
         if (ev.target.closest('a[href^="#"]')) $tocm.open = false;
       });
+      document.addEventListener('click', function (ev) {
+        if ($tocm.open && !$tocm.contains(ev.target)) $tocm.open = false;
+      });
     }
 
     buildChips(metas);
@@ -281,6 +284,7 @@
   });
   document.addEventListener('keydown', function (ev) {
     if (ev.key === '/' && document.activeElement !== $q) { ev.preventDefault(); $q.focus(); }
+    if (ev.key === 'Escape' && $tocm && $tocm.open) $tocm.open = false;
   });
 
   fetch('manifest.json', { cache: 'no-store' })
