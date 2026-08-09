@@ -3,12 +3,28 @@
     "Cross-Cover & Acute Care",
     "Critical Care",
     "Cardiology",
+    "Pulmonology",
     "Renal & Electrolytes",
+    "Infectious Diseases",
     "Endocrine & Obesity",
     "MSK & Sports",
     "Inpatient Essentials"
   ],
   "entries": [
+    {
+      "id": "2026-08-09-pleural-effusion",
+      "title": "Classifying a Pleural Effusion",
+      "date": "2026-08-09",
+      "section": "Pulmonology",
+      "keywords": "pleural effusion, transudate, exudate, light's criteria, pseudoexudate, albumin gradient, nt-probnp, thoracentesis, pleural fluid, heart failure, cirrhosis, ldh, diuretics, note"
+    },
+    {
+      "id": "2026-08-09-beta-lactam-ladder",
+      "title": "Beta-Lactam Ladder: Pseudomonas & ESBL",
+      "date": "2026-08-09",
+      "section": "Infectious Diseases",
+      "keywords": "beta-lactams, antibiotics, ceftriaxone, cefepime, unasyn, ampicillin-sulbactam, zosyn, piperacillin-tazobactam, ertapenem, meropenem, carbapenems, pseudomonas, esbl, antibiotic coverage, note"
+    },
     {
       "id": "2026-08-08-antiarrhythmic-drugs",
       "title": "Anti-Arrhythmic Drugs I–V",
