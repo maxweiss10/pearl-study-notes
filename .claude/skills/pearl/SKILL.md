@@ -22,7 +22,8 @@ Interpret intent from whatever the user says:
 | Paper or article URL (± their takeaway) | **Paper** entry — takeaway used VERBATIM as body if given; else 3 short lines (Main finding / Design / Takeaway); source link |
 | YouTube link, "make this video a concise guide" | **Video** entry — transcript (§2) → distill hard; source link |
 | A quick fact or mnemonic in a sentence | Small **text pearl** |
-| "fix / retitle / regenerate / move to <section> / delete [entry]" | **Edit** `entries/*.html` and/or `manifest.json` in place — ids and filenames stay stable |
+| "fix / retitle / regenerate / move to <section> [entry]" | **Edit** `entries/*.html` and/or `manifest.json` in place — ids and filenames stay stable |
+| "delete / remove [entry]" | **Delete — confirmation REQUIRED first.** Before touching anything: name exactly what will be removed (title · section · date) and note it stays recoverable in git history, then get an explicit yes via AskUserQuestion. Only after the yes: delete `entries/{id}.html` and any `entries/img/{id}-*.jpg`, remove the manifest row (and the section from `sections[]` if now empty), commit `Pearl: delete {TITLE}`, push. Never delete on an ambiguous reference — resolve which entry first. |
 
 Legacy keywords (`raw`, `each`, `merge`, `merge-raw`, `paper`) still work but are never required. If the request is genuinely ambiguous, ask one short question; otherwise proceed.
 

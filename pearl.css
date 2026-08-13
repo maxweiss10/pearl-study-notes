@@ -120,14 +120,15 @@ a:hover{text-decoration-thickness:1.5px}
 .toc{display:none}
 .maincol main{padding-top:24px; padding-bottom:8px}
 
-/* ---------- label tier 1: section eyebrows ---------- */
+/* ---------- section headers: big divisions ---------- */
 .sechead{
-  font-size:11px; font-weight:600; letter-spacing:.08em; text-transform:uppercase;
-  color:var(--lab); margin:72px 0 8px; scroll-margin-top:110px;
+  font-size:16px; font-weight:600; letter-spacing:.08em; text-transform:uppercase;
+  color:var(--ink); margin:96px 0 24px; padding-bottom:8px;
+  border-bottom:1px solid var(--line); scroll-margin-top:110px;
 }
 .sechead::after{content:none}
 .sechead[hidden]{display:none}
-.sechead:first-child{margin-top:0}
+.sechead:first-child{margin-top:8px}
 .dot{display:none}
 
 /* ---------- entries ---------- */
