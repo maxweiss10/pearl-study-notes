@@ -1,6 +1,6 @@
 /* Pearl — command-palette search over section-grouped notes, with a collapsible
-   sidebar (counts, recently viewed), per-note subsection TOC, scroll-spy, reading
-   progress, prev/next + related seams, three-state theme, keyboard navigation. */
+   sidebar (counts, recently added), per-note subsection TOC, scroll-spy and
+   keyboard navigation. */
 (function () {
   'use strict';
 
@@ -41,10 +41,8 @@
   const $toc = document.getElementById('toc');
   const $tocm = document.getElementById('tocm');
   const $tocmList = document.getElementById('tocm-list');
-  const $prog = document.getElementById('prog');
   const $keys = document.getElementById('keys');
   const $pal = document.getElementById('pal');
-  const $theme = document.getElementById('theme');
 
   let entries = [];
   let sectionHeads = [];
@@ -57,7 +55,7 @@
   function save(key, val) {
     try { localStorage.setItem('pearl.' + key, JSON.stringify(val)); } catch (e) {}
   }
-  let recent = load('recent', []);
+  let recentAdded = [];
   let collapsed = load('collapsed', []);
 
   function fmtDate(iso) {
@@ -70,29 +68,6 @@
   function esc(s) {
     return String(s).replace(/[&<>"]/g, function (c) {
       return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c];
-    });
-  }
-
-  /* ---------- theme (auto → light → dark) ---------- */
-  const THEMES = ['auto', 'light', 'dark'];
-  function applyTheme(t) {
-    if (t === 'light' || t === 'dark') document.documentElement.setAttribute('data-theme', t);
-    else document.documentElement.removeAttribute('data-theme');
-    if ($theme) $theme.textContent = t === 'auto' ? 'Auto' : (t === 'light' ? 'Light' : 'Dark');
-    document.querySelectorAll('meta[name="theme-color"]').forEach(function (m) {
-      if (t === 'light') m.content = '#ffffff';
-      else if (t === 'dark') m.content = '#121417';
-      else m.content = m.media && m.media.indexOf('dark') !== -1 ? '#121417' : '#ffffff';
-    });
-  }
-  let theme = load('theme', 'auto');
-  if (THEMES.indexOf(theme) === -1) theme = 'auto';
-  applyTheme(theme);
-  if ($theme) {
-    $theme.addEventListener('click', function () {
-      theme = THEMES[(THEMES.indexOf(theme) + 1) % THEMES.length];
-      save('theme', theme);
-      applyTheme(theme);
     });
   }
 
@@ -309,7 +284,6 @@
       lastJump = r.entry;
     }
     activeId = r.entry.meta.id; /* anchor j/k immediately, before the spy ticks */
-    trackRecent(r.entry.meta.id);
   }
 
   function renderPal() {
@@ -411,8 +385,8 @@
 
   function tocHtml() {
     let h = '';
-    if (recent.length) {
-      h += '<p class="toc-title">Recently viewed</p><ul class="toc-recent">' + listHtml(recent.slice(0, 3)) + '</ul>';
+    if (recentAdded.length) {
+      h += '<p class="toc-title">Recently added</p><ul class="toc-recent">' + listHtml(recentAdded) + '</ul>';
     }
     h += '<p class="toc-title">Contents</p>';
     ordered.forEach(function (s) {
@@ -455,24 +429,12 @@
     updateSpy();
   }
 
-  function trackRecent(id) {
-    const i = recent.indexOf(id);
-    if (i !== -1) recent.splice(i, 1);
-    recent.unshift(id);
-    recent = recent.slice(0, 6);
-    save('recent', recent);
-  }
-
-  /* ---------- scroll-spy · progress ---------- */
+  /* ---------- scroll-spy ---------- */
   let spyTicking = false;
   let activeId = null;
 
   function updateSpy() {
     spyTicking = false;
-    const doc = document.documentElement;
-    const max = doc.scrollHeight - doc.clientHeight;
-    if ($prog) $prog.style.width = (max > 0 ? (doc.scrollTop / max) * 100 : 0) + '%';
-
     let cur = null;
     for (let i = 0; i < entries.length; i++) {
       const e = entries[i];
@@ -509,17 +471,7 @@
       }
     }
 
-    if (cur.meta.id !== activeId) {
-      activeId = cur.meta.id;
-      trackRecent(activeId);
-      scheduleRecentRefresh();
-    }
-  }
-
-  let recentRefresh = null;
-  function scheduleRecentRefresh() {
-    clearTimeout(recentRefresh);
-    recentRefresh = setTimeout(renderToc, 900);
+    activeId = cur.meta.id;
   }
 
   function onScroll() {
@@ -556,47 +508,6 @@
     if (ev.key === 'h' && gPending) { gPending = false; window.scrollTo({ top: 0 }); }
   });
 
-  /* ---------- note seams: related + prev/next ---------- */
-  function keywordSet(meta) {
-    return meta.keywords.split(',').map(function (k) { return k.trim().toLowerCase(); })
-      .filter(function (k) { return k && TYPE_TOKENS.indexOf(k) === -1; });
-  }
-  function buildSeams() {
-    entries.forEach(function (e, i) {
-      const mine = keywordSet(e.meta);
-      const related = entries
-        .filter(function (o) { return o !== e; })
-        .map(function (o) {
-          const shared = keywordSet(o.meta).filter(function (k) { return mine.indexOf(k) !== -1; }).length;
-          return { o: o, score: (o.meta.section === e.meta.section ? 2 : 0) + shared };
-        })
-        .filter(function (r) { return r.score >= 2; })
-        .sort(function (a, b) { return b.score - a.score; })
-        .slice(0, 3);
-
-      if (related.length) {
-        const rel = document.createElement('div');
-        rel.className = 'related';
-        rel.innerHTML = '<span class="caps">Related</span>' +
-          related.map(function (r) {
-            return '<a href="#' + r.o.meta.id + '">' + esc(r.o.meta.title) + '</a>';
-          }).join('&nbsp;&nbsp;·&nbsp;&nbsp;');
-        e.card.appendChild(rel);
-      }
-
-      const prev = entries[i - 1];
-      const next = entries[i + 1];
-      if (prev || next) {
-        const nav = document.createElement('nav');
-        nav.className = 'notenav';
-        nav.setAttribute('aria-label', 'Adjacent notes');
-        if (prev) nav.innerHTML += '<a href="#' + prev.meta.id + '"><span class="nn-label">Previous</span>' + esc(prev.meta.title) + '</a>';
-        if (next) nav.innerHTML += '<a class="nn-next" href="#' + next.meta.id + '"><span class="nn-label">Next</span>' + esc(next.meta.title) + '</a>';
-        e.card.appendChild(nav);
-      }
-    });
-  }
-
   /* ---------- init ---------- */
   function init(manifest, fragMap) {
     const metas = manifest.entries;
@@ -607,6 +518,11 @@
     ordered = names.map(function (name) {
       return { name: name, metas: metas.filter(function (m) { return (m.section || 'Unsorted') === name; }) };
     });
+
+    recentAdded = metas.slice()
+      .sort(function (a, b) { return a.date < b.date ? 1 : a.date > b.date ? -1 : 0; })
+      .slice(0, 3)
+      .map(function (m) { return m.id; });
 
     $list.innerHTML = '';
     ordered.forEach(function (s) {
@@ -647,7 +563,6 @@
       });
     });
 
-    buildSeams();
     buildChips(metas);
     renderToc();
     applyFilter();
