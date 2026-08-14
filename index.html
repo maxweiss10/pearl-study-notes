@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <title>Pearl — study notes</title>
 <meta name="theme-color" media="(prefers-color-scheme: light)" content="#ffffff">
-<meta name="theme-color" media="(prefers-color-scheme: dark)" content="#14181d">
+<meta name="theme-color" media="(prefers-color-scheme: dark)" content="#131619">
 <link rel="manifest" href="manifest.webmanifest">
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-capable" content="yes">
@@ -14,10 +14,13 @@
 <link rel="apple-touch-icon" href="icon-180.png">
 <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect width='100' height='100' rx='22' fill='%231a3a5c'/><circle cx='50' cy='54' r='26' fill='%23ffffff'/><circle cx='42' cy='46' r='9' fill='%23dfe6ee'/></svg>">
 <link rel="preload" href="fonts/IBMPlexSans-Regular.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="preload" href="fonts/IBMPlexSans-Medium.woff2" as="font" type="font/woff2" crossorigin>
 <link rel="preload" href="fonts/IBMPlexSans-SemiBold.woff2" as="font" type="font/woff2" crossorigin>
 <link rel="stylesheet" href="pearl.css">
 </head>
 <body>
+<div id="prog" aria-hidden="true"></div>
+
 <header class="top wrap">
   <div class="brand">
     <svg viewBox="0 0 100 100" width="30" height="30" aria-hidden="true"><rect width="100" height="100" rx="22" fill="#1a3a5c"/><circle cx="50" cy="54" r="26" fill="#fff"/><circle cx="42" cy="46" r="9" fill="#dfe6ee"/></svg>
@@ -29,9 +32,8 @@
 
 <div class="searchbar">
   <div class="wrap">
-    <div class="ctx" id="ctx" aria-hidden="true"><span class="ctx-sec" id="ctx-sec"></span><span class="ctx-title" id="ctx-title"></span></div>
     <div class="sbrow">
-      <input id="q" type="search" placeholder="Search titles, keywords, text…" autocomplete="off" autocapitalize="none" spellcheck="false" aria-label="Search entries">
+      <input id="q" type="search" placeholder="Search notes, drugs, abbreviations…" autocomplete="off" autocapitalize="none" spellcheck="false" aria-label="Search notes">
       <details id="tocm" class="tocm">
         <summary>Contents</summary>
         <div id="tocm-list"></div>
@@ -45,18 +47,31 @@
   <nav id="toc" class="toc" aria-label="Table of contents"></nav>
   <div class="maincol">
     <main id="list"></main>
-    <p class="empty" id="empty" hidden>No entries match.</p>
+    <p class="empty" id="empty" hidden>No notes match.</p>
   </div>
 </div>
 
 <footer class="wrap foot">
-  <span>Add entries with <span class="code">/pearls</span> in Claude Code — no API, no cost.</span>
+  <span>Add notes with <span class="code">/pearls</span> in Claude Code — press <kbd>?</kbd> for shortcuts.</span>
   <span>
     <a href="https://maxweiss10.github.io/whitebook/pdfjs/web/viewer.html?file=../../whitebook.pdf" target="_blank" rel="noopener">White Book ↗</a>
     &nbsp;·&nbsp;
     <a href="https://docs.google.com/document/d/1N8egmcK1GHmA6VPiwi2uGR71VcNt8Ve-M-tMkczFMjc/edit" target="_blank" rel="noopener">Legacy doc archive ↗</a>
   </span>
 </footer>
+
+<dialog id="keys">
+  <div class="kbox">
+    <h3>Keyboard shortcuts</h3>
+    <dl>
+      <dt><kbd>/</kbd></dt><dd>Focus search</dd>
+      <dt><kbd>j</kbd> / <kbd>k</kbd></dt><dd>Next / previous note</dd>
+      <dt><kbd>g</kbd> <kbd>h</kbd></dt><dd>Back to top</dd>
+      <dt><kbd>?</kbd></dt><dd>This help</dd>
+      <dt><kbd>Esc</kbd></dt><dd>Clear search / close</dd>
+    </dl>
+  </div>
+</dialog>
 
 <script src="app.js"></script>
 </body>

@@ -39,6 +39,7 @@ Legacy keywords (`raw`, `each`, `merge`, `merge-raw`, `paper`) still work but ar
 - **Title**: 2-6 words, medical terminology ("ICU Pressors & Inotropes").
 - **id**: `YYYY-MM-DD-slug` (today + 2-4 word kebab slug) → file `entries/{id}.html`.
 - **Section**: pick from `manifest.json → sections` (medical sub-disciplines, White-Book style). If none fits, CREATE one at discipline level (e.g. "Pulmonology", "Infectious Diseases", "GI & Hepatology", "Heme/Onc", "Neurology", "Outpatient & Prevention", "Procedures", "UCSF Systems & Epic") and insert it at a sensible position in the sections array. No near-duplicates, no over-narrow sections.
+- **Aliases** (optional manifest field): extra search terms - abbreviations, brand/generic pairs, synonyms - that do not belong in keywords. The site already expands ~50 common abbreviations automatically (SVT, AF, ESBL, DKA and so on), so add aliases only for terms it would miss.
 - **Keywords**: 8-15 flat lowercase comma-separated tokens — drugs (generic + brand), diagnoses (full + abbrev), core concepts, distinctive context, plus one source-type token (`chalktalk`/`slide`/`paper`/`photo`/`note`/`video`). No doses, no sentence fragments. Keywords live in the manifest ONLY — the site indexes them for search but never displays them.
 
 ## 4 · Design the entry — clinical reference register, real text always
@@ -51,13 +52,30 @@ The register is Sanford Guide / Pocket Medicine, not slides. Typography, alignme
 - No filled bars/panels/pills/badges/coins/tiles, no shadows, no rounded boxes, no per-entry palettes, no decorative glyphs or emoji (no ⚠ ★ ☾ — red text IS the caution marker).
 
 **Scan anatomy** — every row same fixed slots, so the eye drops straight down a column:
-- drug/lead name in `<b>` · attributes plain or `.mut`/`.mech` · dose in `.dose` (tabular figures, units verbatim) · cautions LAST, in `.warn`
+- drug/lead name in `<b>` · attributes plain or `.mut`/`.mech` · dose in `.dose` (renders one size up in medium weight with tabular figures - units verbatim) · cautions LAST, in `.warn`
 - ordered items: markers as `<b class="mk">1.</b>` / `<b class="mk">A.</b>` at text size — the site hangs them in a left gutter so wrapped lines align under the text, never under the marker. No coins or tiles.
 - separator convention: lead **—** details, items inside the details separated by `·` ("**Norepinephrine** (Levophed) — α > β"). Use the em dash everywhere a lead meets its detail; never a colon.
 - conditional/parenthetical asides in `.mut` (renders italic gray) — e.g. "(blood cultures, troponin, d-dimer, type & screen)"
 
 **Base primitives cover nearly everything** (`pearl.css`):
-`.sec` small-caps hairline section label (+`.later`) · `.caps` inline small-caps lead · `.strip` flow line · `.lab` bold lead-in · `.mut` `.mech` `.note` `.brand` gray secondary · `.row2` two-column hairline row (`.rule` adds a column divider; `.full` spans both; stacks automatically on phones with `.mlab` slot labels) · `.colhead2` small-caps column headers · `.duo` side-by-side halves · `table.cmp` hairline table (small-caps `th`, no zebra, wrap in `.tblwrap`) · `.dose` `.warn` `.drug` `.code` `.eyebrow` `.ptext` `.photo`
+`.sec` major subsection (16px semibold, +`.later` for spacing) · `.caps`/`.eyebrow` small-caps label · `.strip` flow line · `.lab` bold lead-in · `.mut` `.mech` `.note` `.brand` gray secondary · `.row2` two-column scan row (`.rule` column divider; `.full` spans both; stacks on phones with `.mlab`) · `.colhead2` column headers · `.duo` side-by-side halves · `table.cmp` table (small-caps `th`, faint zebra, medium first column; wrap in `.tblwrap`) · `.dose` `.warn` `.drug` `.code` `.ptext` `.photo` `.mk`
+
+**Bottom line — start every substantive note with one:**
+
+```html
+<div class="bottomline">
+  <span class="bl-label">Bottom line</span>
+  <p><b>First-line thing</b> - <span class="dose">dose</span>.</p>
+  <span class="bl-row">Escalation, alternatives.</span>
+  <span class="bl-row"><span class="warn">The one pitfall that hurts someone.</span></span>
+</div>
+```
+
+It must be a faithful COMPRESSION of what the note already says - never a new clinical claim. Skip it on pure mnemonics, directories, and one-line paper takeaways.
+
+**Callouts** - `<div class="callout TYPE"><span class="co-label">Label</span><p>text</p></div>`. Types: `emergency` and `contraindication` (red), `pitfall` (amber), `treatment` (green), `evidence` and `investigation` (blue), `procedure` (violet), `pearl` and `highyield` (gray). They render as a colored left rule plus a small-caps label - no filled boxes, no emoji. Use sparingly, for content that genuinely stands apart; an inline `.warn` is still right for a caution that belongs inside a row.
+
+**Other primitives:** `.panel` (summary block), `.dcard` (drug card), `.checklist`. Prefer plain rows and tables first; reach for a card only when the content is a genuinely discrete unit.
 
 **Structure by content** (all hairlines + typography):
 - Ordered escalation / sequence → `.colhead2` + numbered `.row2.rule` rows
