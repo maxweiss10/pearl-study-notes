@@ -177,10 +177,15 @@
   }
 
   /* ---------- search ---------- */
-  function expand(term) {
-    const out = [term];
-    if (SYNONYMS[term]) out.push.apply(out, SYNONYMS[term].split(/\s+/));
-    return out;
+  /* A term matches if the haystack contains it verbatim, or contains the whole
+     expansion of its abbreviation. Requiring every word of the expansion (not any
+     one of them) keeps "esbl" from matching a note that merely says "beta blocker". */
+  function matches(term, hay) {
+    if (hay.indexOf(term) !== -1) return true;
+    const phrase = SYNONYMS[term];
+    if (!phrase) return false;
+    if (hay.indexOf(phrase) !== -1) return true;
+    return phrase.split(/\s+/).every(function (w) { return hay.indexOf(w) !== -1; });
   }
 
   function applySearch() {
@@ -192,9 +197,7 @@
       e.bodyEl.innerHTML = e.originalBody;
       e.titleEl.textContent = e.meta.title;
 
-      const match = terms.every(function (t) {
-        return expand(t).some(function (v) { return e.haystack.indexOf(v) !== -1; });
-      });
+      const match = terms.every(function (t) { return matches(t, e.haystack); });
       e.card.hidden = !match;
       if (match) {
         shown++;
