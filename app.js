@@ -180,12 +180,20 @@
   /* A term matches if the haystack contains it verbatim, or contains the whole
      expansion of its abbreviation. Requiring every word of the expansion (not any
      one of them) keeps "esbl" from matching a note that merely says "beta blocker". */
+  /* Short tokens must match whole words: as bare substrings "tof" hides inside
+     "cutoff" and "oa" inside "coags". Longer tokens stay substring-matched so
+     partial typing still narrows results as you type. */
+  function hit(t, hay) {
+    if (t.length > 3) return hay.indexOf(t) !== -1;
+    const safe = t.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+    return new RegExp('(^|[^a-z0-9])' + safe + '([^a-z0-9]|$)').test(hay);
+  }
   function matches(term, hay) {
-    if (hay.indexOf(term) !== -1) return true;
+    if (hit(term, hay)) return true;
     const phrase = SYNONYMS[term];
     if (!phrase) return false;
     if (hay.indexOf(phrase) !== -1) return true;
-    return phrase.split(/\s+/).every(function (w) { return hay.indexOf(w) !== -1; });
+    return phrase.split(/\s+/).every(function (w) { return hit(w, hay); });
   }
 
   function applySearch() {
