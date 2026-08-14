@@ -1,5 +1,5 @@
 /* Pearl — loads manifest + entry fragments; renders section-grouped notes with
-   metadata, collapsible sidebar (counts, pinned, recent), per-note subsection TOC,
+   collapsible sidebar (counts, recently viewed), per-note subsection TOC,
    scroll-spy, reading progress, keyboard navigation, and synonym-aware search. */
 (function () {
   'use strict';
@@ -7,7 +7,6 @@
   const MONTHS = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
   const TYPE_TOKENS = ['chalktalk', 'slide', 'paper', 'photo', 'note', 'video'];
   const WHITEBOOK_URL = 'https://maxweiss10.github.io/whitebook/pdfjs/web/viewer.html?file=../../whitebook.pdf';
-  const WPM = 200;
 
   /* Lexical medical abbreviations → expansions, so "SVT" finds "supraventricular
      tachycardia" even when the note never spells the abbreviation. Purely
@@ -59,7 +58,6 @@
   function save(key, val) {
     try { localStorage.setItem('pearl.' + key, JSON.stringify(val)); } catch (e) {}
   }
-  let pinned = load('pinned', []);
   let recent = load('recent', []);
   let collapsed = load('collapsed', []);
 
@@ -102,20 +100,13 @@
       w.appendChild(t);
     });
 
-    // metadata: updated · category · reading time · pin
-    const words = (body.textContent || '').trim().split(/\s+/).length;
-    const mins = Math.max(1, Math.round(words / WPM));
+    // metadata: category + last updated only
     const metaEl = document.createElement('div');
     metaEl.className = 'meta';
     metaEl.innerHTML =
-      '<time datetime="' + meta.date + '">' + fmtDate(meta.date) + '</time>' +
-      '<span class="sep">·</span><span>' + esc(meta.section || '') + '</span>' +
-      '<span class="sep">·</span><span>' + mins + ' min read</span>';
-    const pin = document.createElement('button');
-    pin.type = 'button';
-    pin.className = 'pin';
-    pin.dataset.id = meta.id;
-    metaEl.appendChild(pin);
+      '<span>' + esc(meta.section || '') + '</span>' +
+      '<span class="sep">·</span>' +
+      '<time datetime="' + meta.date + '">Updated ' + fmtDate(meta.date) + '</time>';
     card.appendChild(metaEl);
 
     if (meta.source) {
@@ -131,7 +122,7 @@
     }
 
     card.appendChild(body);
-    return { card: card, bodyEl: body, titleEl: a, pinEl: pin, mins: mins };
+    return { card: card, bodyEl: body, titleEl: a };
   }
 
   function textOf(el) {
@@ -260,18 +251,6 @@
   }
 
   /* ---------- sidebar ---------- */
-  function pinLabel(id) { return pinned.indexOf(id) === -1 ? 'Pin' : 'Pinned'; }
-
-  function renderPins() {
-    entries.forEach(function (e) {
-      const on = pinned.indexOf(e.meta.id) !== -1;
-      e.pinEl.textContent = pinLabel(e.meta.id);
-      e.pinEl.setAttribute('aria-pressed', on ? 'true' : 'false');
-      e.pinEl.setAttribute('aria-label', (on ? 'Unpin ' : 'Pin ') + e.meta.title);
-    });
-    renderToc();
-  }
-
   function listHtml(ids) {
     const byId = {};
     entries.forEach(function (e) { byId[e.meta.id] = e.meta; });
@@ -282,9 +261,6 @@
 
   function tocHtml() {
     let h = '';
-    if (pinned.length) {
-      h += '<p class="toc-title">Pinned</p><ul class="toc-recent">' + listHtml(pinned) + '</ul>';
-    }
     if (recent.length) {
       h += '<p class="toc-title">Recently viewed</p><ul class="toc-recent">' + listHtml(recent.slice(0, 3)) + '</ul>';
     }
@@ -447,6 +423,7 @@
       const head = document.createElement('h2');
       head.className = 'sechead';
       head.id = 'sec-' + slugify(s.name);
+      head.dataset.sec = slugify(s.name);
       head.append(s.name);
       $list.appendChild(head);
       const rec = { name: s.name, el: head, entries: [] };
@@ -460,24 +437,17 @@
           card: built.card,
           bodyEl: built.bodyEl,
           titleEl: built.titleEl,
-          pinEl: built.pinEl,
           originalBody: built.bodyEl.innerHTML,
           haystack: (meta.title + ' ' + meta.section + ' ' + meta.keywords + ' ' +
                      (meta.aliases || '') + ' ' + textOf(built.bodyEl)).toLowerCase()
         };
-        built.pinEl.addEventListener('click', function () {
-          const i = pinned.indexOf(meta.id);
-          if (i === -1) pinned.unshift(meta.id); else pinned.splice(i, 1);
-          save('pinned', pinned);
-          renderPins();
-        });
         entries.push(e);
         rec.entries.push(e);
       });
     });
 
     buildChips(metas);
-    renderPins();
+    renderToc();
     applySearch();
 
     if (location.hash) {

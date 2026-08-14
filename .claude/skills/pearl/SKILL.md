@@ -36,7 +36,7 @@ Legacy keywords (`raw`, `each`, `merge`, `merge-raw`, `paper`) still work but ar
 
 ## 3 · Metadata
 
-- **Title**: 2-6 words, medical terminology ("ICU Pressors & Inotropes").
+- **Title**: 2-6 words, medical terminology ("ICU Pressors & Inotropes"). The site renders it at 32px as the page's landmark, followed by a small `section · Updated date` line — do NOT add bottom-line summaries, reading times, or any other metadata to the fragment.
 - **id**: `YYYY-MM-DD-slug` (today + 2-4 word kebab slug) → file `entries/{id}.html`.
 - **Section**: pick from `manifest.json → sections` (medical sub-disciplines, White-Book style). If none fits, CREATE one at discipline level (e.g. "Pulmonology", "Infectious Diseases", "GI & Hepatology", "Heme/Onc", "Neurology", "Outpatient & Prevention", "Procedures", "UCSF Systems & Epic") and insert it at a sensible position in the sections array. No near-duplicates, no over-narrow sections.
 - **Aliases** (optional manifest field): extra search terms - abbreviations, brand/generic pairs, synonyms - that do not belong in keywords. The site already expands ~50 common abbreviations automatically (SVT, AF, ESBL, DKA and so on), so add aliases only for terms it would miss.
@@ -60,18 +60,7 @@ The register is Sanford Guide / Pocket Medicine, not slides. Typography, alignme
 **Base primitives cover nearly everything** (`pearl.css`):
 `.sec` major subsection (16px semibold, +`.later` for spacing) · `.caps`/`.eyebrow` small-caps label · `.strip` flow line · `.lab` bold lead-in · `.mut` `.mech` `.note` `.brand` gray secondary · `.row2` two-column scan row (`.rule` column divider; `.full` spans both; stacks on phones with `.mlab`) · `.colhead2` column headers · `.duo` side-by-side halves · `table.cmp` table (small-caps `th`, faint zebra, medium first column; wrap in `.tblwrap`) · `.dose` `.warn` `.drug` `.code` `.ptext` `.photo` `.mk`
 
-**Bottom line — start every substantive note with one:**
-
-```html
-<div class="bottomline">
-  <span class="bl-label">Bottom line</span>
-  <p><b>First-line thing</b> - <span class="dose">dose</span>.</p>
-  <span class="bl-row">Escalation, alternatives.</span>
-  <span class="bl-row"><span class="warn">The one pitfall that hurts someone.</span></span>
-</div>
-```
-
-It must be a faithful COMPRESSION of what the note already says - never a new clinical claim. Skip it on pure mnemonics, directories, and one-line paper takeaways.
+**Warnings are one component:** wrap every clinical danger or escalation in `<span class="warn">`. The site prefixes the ⚠ marker and colors it — never type the glyph yourself, never bold it instead, never use red for anything else.
 
 **Callouts** - `<div class="callout TYPE"><span class="co-label">Label</span><p>text</p></div>`. Types: `emergency` and `contraindication` (red), `pitfall` (amber), `treatment` (green), `evidence` and `investigation` (blue), `procedure` (violet), `pearl` and `highyield` (gray). They render as a colored left rule plus a small-caps label - no filled boxes, no emoji. Use sparingly, for content that genuinely stands apart; an inline `.warn` is still right for a caution that belongs inside a row.
 
