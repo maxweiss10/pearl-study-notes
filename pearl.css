@@ -68,6 +68,12 @@ a:hover{text-decoration:underline; text-underline-offset:2px}
 .top .brand .sub{color:var(--slate); font-size:var(--t-xs)}
 .top .right{display:flex; align-items:baseline; gap:var(--s-4)}
 .count{color:var(--slate); font-size:var(--t-xs); white-space:nowrap}
+.wb{
+  font-size:var(--t-xs); font-weight:500; color:var(--ink); white-space:nowrap;
+  border:1px solid var(--line-2); border-radius:999px; padding:4px 12px;
+  transition:background var(--tap) ease, border-color var(--tap) ease;
+}
+.wb:hover{background:var(--hover); border-color:var(--gray); text-decoration:none}
 
 /* ---------- search ---------- */
 .searchbar{position:sticky; top:0; z-index:20; background:var(--page); padding:var(--s-2) 0; border-bottom:1px solid var(--line)}
@@ -272,7 +278,6 @@ table.cmp{width:100%; border-collapse:collapse; margin:var(--s-2) 0 var(--s-4)}
 .toc-sec.closed .caret{transform:rotate(-90deg)}
 .toc-sec.closed ul{display:none}
 .toc-n{margin-left:auto; color:var(--slate); font-weight:400; letter-spacing:0}
-.toc-foot{margin-top:var(--s-5); font-size:var(--t-xs)}
 .toc .subs{margin:2px 0 var(--s-2)}
 .toc .subs a{padding:2px var(--s-2) 2px var(--s-6); font-size:var(--t-xs); color:var(--slate)}
 .toc .subs a.active{color:var(--ink); background:none; font-weight:500; border-left-color:transparent}

@@ -6,7 +6,6 @@
 
   const MONTHS = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
   const TYPE_TOKENS = ['chalktalk', 'slide', 'paper', 'photo', 'note', 'video'];
-  const WHITEBOOK_URL = 'https://maxweiss10.github.io/whitebook/pdfjs/web/viewer.html?file=../../whitebook.pdf';
 
   /* Lexical medical abbreviations → expansions. Purely terminological. */
   const SYNONYMS = {
@@ -402,7 +401,6 @@
       });
       h += '</ul></div>';
     });
-    h += '<p class="toc-foot"><a href="' + WHITEBOOK_URL + '" target="_blank" rel="noopener">White Book ↗</a></p>';
     return h;
   }
 
