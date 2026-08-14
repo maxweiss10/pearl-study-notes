@@ -1,9 +1,8 @@
 /* Pearl — clinical reference.
-   v7: subtraction pass. No pins, no reading time, no bottom-line blocks.
-   Specialty accent on section landmarks · 32px note titles · compact tables ·
-   cool gray-blue secondary · one warning component · Spotlight-style search.
-   Scale 12/14/16/20/24/28/32/36 · spacing 4/8/12/16/24/32/48/64/80/96.
-   Red stays reserved for danger and escalation. */
+   v8: command-palette search · prev/next + related note seams · three-state theme
+   (auto/light/dark via data-theme, persisted) · mobile tap targets · quiet
+   loading/empty states. v7 register unchanged: subtraction, specialty accents on
+   landmarks only, one warning component, red reserved for danger. */
 
 @font-face{font-family:'IBM Plex Sans';src:url('fonts/IBMPlexSans-Regular.woff2') format('woff2');font-weight:400;font-style:normal;font-display:swap}
 @font-face{font-family:'IBM Plex Sans';src:url('fonts/IBMPlexSans-Medium.woff2') format('woff2');font-weight:500;font-style:normal;font-display:swap}
@@ -11,6 +10,7 @@
 @font-face{font-family:'IBM Plex Sans';src:url('fonts/IBMPlexSans-Italic.woff2') format('woff2');font-weight:400;font-style:italic;font-display:swap}
 
 :root{
+  color-scheme:light;
   --t-xs:12px; --t-sm:14px; --t-base:15px; --t-md:16px; --t-lg:20px;
   --t-xl:24px; --t-2xl:28px; --t-3xl:32px; --t-4xl:36px;
   --s-1:4px; --s-2:8px; --s-3:12px; --s-4:16px; --s-5:24px; --s-6:32px;
@@ -18,15 +18,13 @@
   --radius:6px; --tap:130ms;
 
   --page:#ffffff; --ink:#171A1F; --ink-2:#333940; --gray:#5C6672;
-  --slate:#66748A;                /* cool gray-blue: labels, metadata, th */
+  --slate:#66748A;
   --line:#EBEDF0; --line-2:#DDE1E6; --rule:#D6DAE0;
   --zebra:#FAFBFC; --hover:#F5F7F9; --thbg:#F7F8FA;
   --link:#2F5C8F; --danger:#A61B1B;
 
-  /* specialty accents — section landmarks only, never body text */
   --sec-accent:#5C6672;
   --mark:#FFE9A8; --mark-ink:#171A1F;
-  /* legacy aliases used by entry fragments */
   --mut:#5C6672; --mut2:#66748A; --faint:#66748A; --line2:#DDE1E6; --red:#A61B1B;
   --chipbg:#F1F2F4; --accent:#171A1F; --bar-bg:#171A1F; --bar-ink:#fff;
   --green:#171A1F; --greenbg:transparent; --redbg:transparent;
@@ -34,9 +32,11 @@
   --rowline:#F1F3F5; --divider:#EBEDF0; --endmark:#D6DAE0; --body-c:#333940;
   --c-danger:#A61B1B; --c-warn:#8A5A12; --c-treat:#1F6B45;
   --c-inv:#2F5C8F; --c-proc:#5B4A9E; --c-gen:#5C6672;
+  --shadowc:rgba(10,15,20,.12);
 }
 @media (prefers-color-scheme: dark){
-  :root{
+  :root:not([data-theme="light"]){
+    color-scheme:dark;
     --page:#121417; --ink:#EDEFF2; --ink-2:#C7CDD5; --gray:#98A1AC;
     --slate:#96A2B4;
     --line:#23272D; --line-2:#31363E; --rule:#3A4048;
@@ -50,10 +50,46 @@
     --rowline:#1C2025; --divider:#23272D; --endmark:#3A4048; --body-c:#C7CDD5;
     --c-danger:#E08888; --c-warn:#D9AE63; --c-treat:#79C39A;
     --c-inv:#8FB4DE; --c-proc:#A99AE0; --c-gen:#98A1AC;
+    --shadowc:rgba(0,0,0,.5);
   }
+  :root:not([data-theme="light"]) .sechead[data-sec="cross-cover-acute-care"]{--sec-accent:#98A1AC}
+  :root:not([data-theme="light"]) .sechead[data-sec="critical-care"]{--sec-accent:#D89791}
+  :root:not([data-theme="light"]) .sechead[data-sec="cardiology"]{--sec-accent:#D492AC}
+  :root:not([data-theme="light"]) .sechead[data-sec="pulmonology"]{--sec-accent:#8FB4DE}
+  :root:not([data-theme="light"]) .sechead[data-sec="renal-electrolytes"]{--sec-accent:#7CC1C1}
+  :root:not([data-theme="light"]) .sechead[data-sec="infectious-diseases"]{--sec-accent:#86C4A0}
+  :root:not([data-theme="light"]) .sechead[data-sec="endocrine-obesity"]{--sec-accent:#A99AE0}
+  :root:not([data-theme="light"]) .sechead[data-sec="msk-sports"]{--sec-accent:#D6A46B}
+  :root:not([data-theme="light"]) .sechead[data-sec="inpatient-essentials"]{--sec-accent:#A3AEBF}
 }
+:root[data-theme="dark"]{
+    color-scheme:dark;
+    --page:#121417; --ink:#EDEFF2; --ink-2:#C7CDD5; --gray:#98A1AC;
+    --slate:#96A2B4;
+    --line:#23272D; --line-2:#31363E; --rule:#3A4048;
+    --zebra:#171A1E; --hover:#1A1E23; --thbg:#191D22;
+    --link:#8FB4DE; --danger:#E08888;
+    --sec-accent:#98A1AC;
+    --mark:#C9A93E; --mark-ink:#141005;
+    --mut:#98A1AC; --mut2:#96A2B4; --faint:#96A2B4; --line2:#31363E; --red:#E08888;
+    --chipbg:#1E2228; --accent:#EDEFF2; --bar-bg:#EDEFF2; --bar-ink:#121417;
+    --green:#EDEFF2; --bannerline:#23272D; --card-line:#23272D;
+    --rowline:#1C2025; --divider:#23272D; --endmark:#3A4048; --body-c:#C7CDD5;
+    --c-danger:#E08888; --c-warn:#D9AE63; --c-treat:#79C39A;
+    --c-inv:#8FB4DE; --c-proc:#A99AE0; --c-gen:#98A1AC;
+    --shadowc:rgba(0,0,0,.5);
+}
+:root[data-theme="dark"] .sechead[data-sec="cross-cover-acute-care"]{--sec-accent:#98A1AC}
+:root[data-theme="dark"] .sechead[data-sec="critical-care"]{--sec-accent:#D89791}
+:root[data-theme="dark"] .sechead[data-sec="cardiology"]{--sec-accent:#D492AC}
+:root[data-theme="dark"] .sechead[data-sec="pulmonology"]{--sec-accent:#8FB4DE}
+:root[data-theme="dark"] .sechead[data-sec="renal-electrolytes"]{--sec-accent:#7CC1C1}
+:root[data-theme="dark"] .sechead[data-sec="infectious-diseases"]{--sec-accent:#86C4A0}
+:root[data-theme="dark"] .sechead[data-sec="endocrine-obesity"]{--sec-accent:#A99AE0}
+:root[data-theme="dark"] .sechead[data-sec="msk-sports"]{--sec-accent:#D6A46B}
+:root[data-theme="dark"] .sechead[data-sec="inpatient-essentials"]{--sec-accent:#A3AEBF}
 
-/* specialty accents (light / dark) */
+/* specialty accents (light) */
 .sechead[data-sec="cross-cover-acute-care"]{--sec-accent:#5A6472}
 .sechead[data-sec="critical-care"]{--sec-accent:#95403A}
 .sechead[data-sec="cardiology"]{--sec-accent:#7E2E4B}
@@ -63,17 +99,6 @@
 .sechead[data-sec="endocrine-obesity"]{--sec-accent:#5B4A9E}
 .sechead[data-sec="msk-sports"]{--sec-accent:#95591F}
 .sechead[data-sec="inpatient-essentials"]{--sec-accent:#4A5568}
-@media (prefers-color-scheme: dark){
-  .sechead[data-sec="cross-cover-acute-care"]{--sec-accent:#98A1AC}
-  .sechead[data-sec="critical-care"]{--sec-accent:#D89791}
-  .sechead[data-sec="cardiology"]{--sec-accent:#D492AC}
-  .sechead[data-sec="pulmonology"]{--sec-accent:#8FB4DE}
-  .sechead[data-sec="renal-electrolytes"]{--sec-accent:#7CC1C1}
-  .sechead[data-sec="infectious-diseases"]{--sec-accent:#86C4A0}
-  .sechead[data-sec="endocrine-obesity"]{--sec-accent:#A99AE0}
-  .sechead[data-sec="msk-sports"]{--sec-accent:#D6A46B}
-  .sechead[data-sec="inpatient-essentials"]{--sec-accent:#A3AEBF}
-}
 
 *{box-sizing:border-box}
 html{-webkit-text-size-adjust:100%}
@@ -99,13 +124,21 @@ a:hover{text-decoration:underline; text-underline-offset:2px}
 .top .brand svg{display:none}
 .top .brand h1{font-size:var(--t-md); margin:0; font-weight:600; color:var(--ink); letter-spacing:-.01em}
 .top .brand .sub{color:var(--slate); font-size:var(--t-xs)}
+.top .right{display:flex; align-items:baseline; gap:var(--s-4)}
 .count{color:var(--slate); font-size:var(--t-xs); white-space:nowrap}
+#theme{
+  font-family:inherit; font-size:var(--t-xs); font-weight:500; color:var(--slate);
+  background:none; border:1px solid var(--line-2); border-radius:999px; padding:3px 12px;
+  cursor:pointer; transition:color var(--tap) ease, border-color var(--tap) ease, background var(--tap) ease;
+}
+#theme:hover{color:var(--ink); background:var(--hover)}
 
-/* ---------- search (Spotlight-ish) ---------- */
+/* ---------- search ---------- */
 .searchbar{position:sticky; top:0; z-index:20; background:var(--page); padding:var(--s-2) 0; border-bottom:1px solid var(--line)}
 .searchbar .wrap{position:relative}
 .sbrow{display:flex; gap:var(--s-2); align-items:stretch}
 #q{
+  -webkit-appearance:none; appearance:none;
   flex:1; min-width:0; font-family:inherit; font-size:var(--t-md); color:var(--ink);
   background:var(--zebra); border:1px solid var(--line-2); border-radius:8px;
   padding:11px 14px; outline:none;
@@ -118,11 +151,33 @@ a:hover{text-decoration:underline; text-underline-offset:2px}
 .chips::-webkit-scrollbar{display:none}
 .chip{
   flex:none; font-family:inherit; font-size:var(--t-xs); font-weight:500; color:var(--slate); cursor:pointer;
-  background:none; border:0; border-radius:var(--radius); padding:5px 10px;
+  background:none; border:0; border-radius:var(--radius); padding:6px 11px;
   transition:background var(--tap) ease, color var(--tap) ease;
 }
 .chip:hover{background:var(--hover); color:var(--ink)}
 .chip.on{background:var(--ink); color:var(--page)}
+
+/* command-palette results */
+.pal{
+  position:absolute; left:var(--s-4); right:var(--s-4); top:calc(100% - 2px); z-index:24;
+  background:var(--page); border:1px solid var(--line-2); border-radius:10px;
+  box-shadow:0 14px 40px var(--shadowc); overflow:hidden; max-height:min(430px, 62vh); overflow-y:auto;
+}
+.pal[hidden]{display:none}
+.pal-item{
+  display:block; width:100%; text-align:left; font-family:inherit; cursor:pointer;
+  background:none; border:0; border-left:2px solid transparent;
+  padding:10px 14px; border-bottom:1px solid var(--line);
+}
+.pal-item:last-child{border-bottom:0}
+.pal-item.on{background:var(--hover); border-left-color:var(--ink)}
+.pal-t{display:flex; align-items:baseline; gap:var(--s-3)}
+.pal-title{font-size:var(--t-sm); font-weight:600; color:var(--ink); line-height:1.35}
+.pal-sec{margin-left:auto; flex:none; font-size:var(--t-xs); color:var(--slate); white-space:nowrap}
+.pal-snip{margin-top:1px; font-size:var(--t-xs); color:var(--gray); line-height:1.5; overflow:hidden; display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical}
+.pal-none{padding:12px 14px; font-size:var(--t-sm); color:var(--gray); font-style:italic}
+.pal mark{background:var(--mark); color:var(--mark-ink); padding:0 1px; border-radius:2px}
+.pal-hint{position:sticky; bottom:0; display:flex; gap:var(--s-4); padding:6px 14px; background:var(--zebra); border-top:1px solid var(--line); font-size:11px; color:var(--slate)}
 
 .tocm{flex:none; display:flex}
 .tocm summary{
@@ -137,12 +192,13 @@ a:hover{text-decoration:underline; text-underline-offset:2px}
 .tocm > div{
   position:absolute; left:var(--s-4); right:var(--s-4); top:calc(100% + var(--s-1)); z-index:22;
   background:var(--page); border:1px solid var(--line-2); border-radius:8px;
-  box-shadow:0 10px 28px rgba(0,0,0,.10); padding:var(--s-4); max-height:64vh; overflow-y:auto;
+  box-shadow:0 10px 28px var(--shadowc); padding:var(--s-4); max-height:64vh; overflow-y:auto;
 }
 
 .layout{display:block}
 .toc{display:none}
 .maincol main{padding-top:var(--s-5); padding-bottom:var(--s-2)}
+.loading{color:var(--slate); font-size:var(--t-sm); padding:var(--s-6) 0}
 
 /* ---------- section landmark ---------- */
 .sechead{
@@ -159,7 +215,7 @@ a:hover{text-decoration:underline; text-underline-offset:2px}
 /* ---------- notes ---------- */
 .card{background:transparent; border:0; box-shadow:none; padding:0; margin:0 0 var(--s-9); scroll-margin-top:100px}
 .card:last-of-type{margin-bottom:var(--s-7)}
-.card::after{content:""; display:block; width:56px; height:2px; background:var(--rule); margin-top:var(--s-9)}
+.card::after{content:""; display:block; width:56px; height:2px; background:var(--rule); margin-top:var(--s-7)}
 .card:last-of-type::after{display:none}
 .card header{margin:0 0 var(--s-1)}
 .card h2{font-size:var(--t-3xl); line-height:1.2; margin:0; font-weight:600; letter-spacing:-.022em; color:var(--ink)}
@@ -170,7 +226,21 @@ a:hover{text-decoration:underline; text-underline-offset:2px}
 .tags{display:none}
 .src{margin:calc(var(--s-4) * -1) 0 var(--s-4); font-size:var(--t-xs); color:var(--slate); overflow-wrap:anywhere}
 .empty{color:var(--gray); font-style:italic; padding-top:var(--s-2)}
+.empty button{font:inherit; font-style:normal; color:var(--link); background:none; border:0; cursor:pointer; padding:0; text-decoration:underline; text-underline-offset:2px}
 mark{background:var(--mark); color:var(--mark-ink); padding:0 1px; border-radius:2px}
+
+/* note seams: related + prev/next */
+.related{margin-top:var(--s-6); font-size:var(--t-sm)}
+.related .caps{display:block; margin-bottom:var(--s-1)}
+.related a{color:var(--link)}
+.notenav{display:flex; justify-content:space-between; gap:var(--s-5); margin-top:var(--s-5)}
+.notenav a{
+  display:block; max-width:46%; font-size:var(--t-sm); color:var(--gray); line-height:1.4;
+  padding:var(--s-2) 0; transition:color var(--tap) ease;
+}
+.notenav a:hover{color:var(--ink); text-decoration:none}
+.notenav .nn-label{display:block; font-size:var(--t-xs); font-weight:600; letter-spacing:.1em; text-transform:uppercase; color:var(--slate)}
+.notenav .nn-next{margin-left:auto; text-align:right}
 
 .foot{display:flex; flex-wrap:wrap; gap:var(--s-2) var(--s-5); justify-content:space-between; color:var(--slate); font-size:var(--t-xs); padding-top:var(--s-7); padding-bottom:calc(var(--s-6) + env(safe-area-inset-bottom))}
 
@@ -187,11 +257,7 @@ mark{background:var(--mark); color:var(--mark-ink); padding:0 1px; border-radius
 .strip{margin:0 0 var(--s-2); line-height:1.6; max-width:76ch}
 .ptext{margin:0 0 var(--s-3); line-height:1.7; max-width:72ch}
 .ptext:last-child{margin-bottom:0}
-
-/* numbers */
 .dose{font-size:var(--t-md); font-weight:600; color:var(--ink); white-space:nowrap; letter-spacing:-.01em}
-
-/* one warning component, everywhere */
 .warn{color:var(--danger); font-weight:500}
 .warn::before{content:"⚠\00a0"; font-weight:400; font-size:.92em}
 .avoid{color:var(--danger)}
@@ -203,13 +269,10 @@ mark{background:var(--mark); color:var(--mark-ink); padding:0 1px; border-radius
 td.cell-avoid{background:none !important}
 .banner{background:none; border:0; padding:0; margin:var(--s-3) 0 0}
 .num{display:inline; background:none; color:var(--ink); font-weight:600; margin-right:.25em}
-
-/* deeper indentation hierarchy */
 .body ul,.body ol{margin:0 0 var(--s-3); padding-left:var(--s-5); line-height:1.55}
 .body ul ul,.body ol ol,.body ul ol,.body ol ul{margin:var(--s-1) 0 var(--s-1); padding-left:var(--s-5)}
 .body li{margin-bottom:var(--s-1)}
 
-/* callouts (kept as a primitive; no fills) */
 .callout{border-left:2px solid var(--c-gen); padding:0 0 0 var(--s-4); margin:var(--s-4) 0; max-width:72ch}
 .callout .co-label{display:block; font-size:var(--t-xs); font-weight:600; letter-spacing:.1em; text-transform:uppercase; color:var(--c-gen); margin-bottom:2px}
 .callout p{margin:0 0 var(--s-1); line-height:1.6}
@@ -247,7 +310,7 @@ td.cell-avoid{background:none !important}
 .row2.rule > div:last-child:has(> .mk){padding-left:calc(var(--s-6) + var(--s-4))}
 .row2.rule > div:last-child .mk{left:var(--s-4)}
 
-/* ---------- tables: compact, AMBOSS-ish headers ---------- */
+/* ---------- tables ---------- */
 table.cmp{width:100%; border-collapse:collapse; margin:var(--s-2) 0 var(--s-4)}
 .cmp th{
   background:var(--thbg); color:var(--slate); font-size:var(--t-xs); font-weight:600;
@@ -294,7 +357,7 @@ table.cmp{width:100%; border-collapse:collapse; margin:var(--s-2) 0 var(--s-4)}
 /* ---------- shortcuts ---------- */
 #keys{border:none; padding:0; background:transparent}
 #keys::backdrop{background:rgba(15,18,22,.35)}
-#keys .kbox{background:var(--page); border:1px solid var(--line-2); border-radius:8px; padding:var(--s-5); min-width:280px; box-shadow:0 12px 40px rgba(0,0,0,.16)}
+#keys .kbox{background:var(--page); border:1px solid var(--line-2); border-radius:8px; padding:var(--s-5); min-width:280px; box-shadow:0 12px 40px var(--shadowc)}
 #keys h3{margin:0 0 var(--s-4); font-size:var(--t-md); font-weight:600; color:var(--ink)}
 #keys dl{display:grid; grid-template-columns:auto 1fr; gap:var(--s-2) var(--s-4); margin:0; font-size:var(--t-sm)}
 #keys dt{text-align:right}
@@ -304,6 +367,7 @@ kbd{font-family:'IBM Plex Mono',ui-monospace,Menlo,monospace; font-size:var(--t-
 /* ---------- phones ---------- */
 @media (max-width:600px){
   .wrap{padding:0 var(--s-3)}
+  .pal{left:var(--s-3); right:var(--s-3); max-height:56vh}
   .tocm > div{left:var(--s-3); right:var(--s-3)}
   .top{padding-top:calc(var(--s-3) + env(safe-area-inset-top))}
   .card h2{font-size:var(--t-xl)}
@@ -318,6 +382,13 @@ kbd{font-family:'IBM Plex Mono',ui-monospace,Menlo,monospace; font-size:var(--t-
   .row2.rule > div:last-child .mk{left:0}
   .mlab{display:inline; font-size:var(--t-xs); font-weight:600; letter-spacing:.1em; text-transform:uppercase; color:var(--slate); margin-right:var(--s-2)}
   .duo{grid-template-columns:1fr; gap:var(--s-4)}
+  /* comfortable tap targets */
+  .chip{padding:9px 13px}
+  .tocm li a,.tocm .toc-recent a{padding-top:9px; padding-bottom:9px}
+  .tocm .toc-sec-link{padding-top:8px; padding-bottom:8px}
+  .pal-item{padding:12px 14px}
+  .notenav a{padding:var(--s-3) 0}
+  #theme{padding:6px 14px}
 }
 
 /* ---------- wide ---------- */
@@ -325,14 +396,14 @@ kbd{font-family:'IBM Plex Mono',ui-monospace,Menlo,monospace; font-size:var(--t-
   .tocm{display:none}
   .top.wrap,.searchbar .wrap,.layout.wrap{max-width:1240px}
   .searchbar .sbrow,.searchbar .chips{max-width:920px; margin-left:288px}
+  .pal{left:288px; right:0; max-width:920px}
   .layout{display:grid; grid-template-columns:256px minmax(0,920px); gap:var(--s-6); align-items:start}
   .toc{display:block; position:sticky; top:72px; max-height:calc(100vh - 96px); overflow-y:auto; padding:var(--s-5) var(--s-1) var(--s-5) 0; scrollbar-width:thin}
   .card > header,.sechead,.meta{margin-left:-24px}
-  .sechead{margin-left:-24px; padding-left:0}
 }
 
 @media print{
-  .searchbar,.foot,.toc,.tocm,#prog,#keys{display:none}
+  .searchbar,.foot,.toc,.tocm,#prog,#keys,.notenav,.related{display:none}
   .card{break-inside:avoid}
   body{background:#fff}
 }

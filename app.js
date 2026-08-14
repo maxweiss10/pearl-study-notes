@@ -1,6 +1,6 @@
-/* Pearl — loads manifest + entry fragments; renders section-grouped notes with
-   collapsible sidebar (counts, recently viewed), per-note subsection TOC,
-   scroll-spy, reading progress, keyboard navigation, and synonym-aware search. */
+/* Pearl — command-palette search over section-grouped notes, with a collapsible
+   sidebar (counts, recently viewed), per-note subsection TOC, scroll-spy, reading
+   progress, prev/next + related seams, three-state theme, keyboard navigation. */
 (function () {
   'use strict';
 
@@ -8,9 +8,7 @@
   const TYPE_TOKENS = ['chalktalk', 'slide', 'paper', 'photo', 'note', 'video'];
   const WHITEBOOK_URL = 'https://maxweiss10.github.io/whitebook/pdfjs/web/viewer.html?file=../../whitebook.pdf';
 
-  /* Lexical medical abbreviations → expansions, so "SVT" finds "supraventricular
-     tachycardia" even when the note never spells the abbreviation. Purely
-     terminological: no clinical claims encoded here. */
+  /* Lexical medical abbreviations → expansions. Purely terminological. */
   const SYNONYMS = {
     svt: 'supraventricular tachycardia', vt: 'ventricular tachycardia',
     af: 'atrial fibrillation', afib: 'atrial fibrillation', aflutter: 'atrial flutter',
@@ -45,12 +43,13 @@
   const $tocmList = document.getElementById('tocm-list');
   const $prog = document.getElementById('prog');
   const $keys = document.getElementById('keys');
+  const $pal = document.getElementById('pal');
+  const $theme = document.getElementById('theme');
 
   let entries = [];
   let sectionHeads = [];
   let ordered = [];
 
-  /* ---------- small persistence helpers ---------- */
   function load(key, fallback) {
     try { return JSON.parse(localStorage.getItem('pearl.' + key)) || fallback; }
     catch (e) { return fallback; }
@@ -74,7 +73,30 @@
     });
   }
 
-  /* ---------- card construction ---------- */
+  /* ---------- theme (auto → light → dark) ---------- */
+  const THEMES = ['auto', 'light', 'dark'];
+  function applyTheme(t) {
+    if (t === 'light' || t === 'dark') document.documentElement.setAttribute('data-theme', t);
+    else document.documentElement.removeAttribute('data-theme');
+    if ($theme) $theme.textContent = t === 'auto' ? 'Auto' : (t === 'light' ? 'Light' : 'Dark');
+    document.querySelectorAll('meta[name="theme-color"]').forEach(function (m) {
+      if (t === 'light') m.content = '#ffffff';
+      else if (t === 'dark') m.content = '#121417';
+      else m.content = m.media && m.media.indexOf('dark') !== -1 ? '#121417' : '#ffffff';
+    });
+  }
+  let theme = load('theme', 'auto');
+  if (THEMES.indexOf(theme) === -1) theme = 'auto';
+  applyTheme(theme);
+  if ($theme) {
+    $theme.addEventListener('click', function () {
+      theme = THEMES[(THEMES.indexOf(theme) + 1) % THEMES.length];
+      save('theme', theme);
+      applyTheme(theme);
+    });
+  }
+
+  /* ---------- cards ---------- */
   function buildCard(meta, fragmentHtml) {
     const card = document.createElement('article');
     card.className = 'card';
@@ -89,18 +111,6 @@
     header.appendChild(h2);
     card.appendChild(header);
 
-    const body = document.createElement('div');
-    body.className = 'body';
-    body.innerHTML = fragmentHtml;
-    body.querySelectorAll('table').forEach(function (t) {
-      if (t.closest('.tblwrap')) return;
-      const w = document.createElement('div');
-      w.className = 'tblwrap';
-      t.parentNode.insertBefore(w, t);
-      w.appendChild(t);
-    });
-
-    // metadata: category + last updated only
     const metaEl = document.createElement('div');
     metaEl.className = 'meta';
     metaEl.innerHTML =
@@ -121,14 +131,18 @@
       card.appendChild(src);
     }
 
+    const body = document.createElement('div');
+    body.className = 'body';
+    body.innerHTML = fragmentHtml;
+    body.querySelectorAll('table').forEach(function (t) {
+      if (t.closest('.tblwrap')) return;
+      const w = document.createElement('div');
+      w.className = 'tblwrap';
+      t.parentNode.insertBefore(w, t);
+      w.appendChild(t);
+    });
     card.appendChild(body);
     return { card: card, bodyEl: body, titleEl: a };
-  }
-
-  function textOf(el) {
-    // include img alt text: raw-photo notes carry their content there
-    const alts = Array.prototype.map.call(el.querySelectorAll('img[alt]'), function (i) { return i.alt; }).join(' ');
-    return ((el.textContent || '') + ' ' + alts).replace(/\s+/g, ' ').toLowerCase();
   }
 
   function highlight(root, terms) {
@@ -167,13 +181,7 @@
     });
   }
 
-  /* ---------- search ---------- */
-  /* A term matches if the haystack contains it verbatim, or contains the whole
-     expansion of its abbreviation. Requiring every word of the expansion (not any
-     one of them) keeps "esbl" from matching a note that merely says "beta blocker". */
-  /* Short tokens must match whole words: as bare substrings "tof" hides inside
-     "cutoff" and "oa" inside "coags". Longer tokens stay substring-matched so
-     partial typing still narrows results as you type. */
+  /* ---------- matching (word-boundary for short tokens; whole expansion) ---------- */
   function hit(t, hay) {
     if (t.length > 3) return hay.indexOf(t) !== -1;
     const safe = t.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
@@ -186,46 +194,32 @@
     if (hay.indexOf(phrase) !== -1) return true;
     return phrase.split(/\s+/).every(function (w) { return hit(w, hay); });
   }
-
-  function applySearch() {
-    const q = $q.value.trim().toLowerCase();
-    const terms = q ? q.split(/\s+/) : [];
-    let shown = 0;
-
-    entries.forEach(function (e) {
-      e.bodyEl.innerHTML = e.originalBody;
-      e.titleEl.textContent = e.meta.title;
-
-      const match = terms.every(function (t) { return matches(t, e.haystack); });
-      e.card.hidden = !match;
-      if (match) {
-        shown++;
-        if (terms.length) {
-          highlight(e.bodyEl, terms);
-          highlight(e.titleEl, terms);
-        }
-      }
+  function expandedTerms(terms) {
+    const out = terms.slice();
+    terms.forEach(function (t) {
+      if (SYNONYMS[t]) out.push.apply(out, SYNONYMS[t].split(/\s+/).filter(function (w) { return w.length > 3; }));
     });
+    return out.filter(function (t, i, a) { return a.indexOf(t) === i; });
+  }
 
+  /* ---------- chip filter (inline card filtering) ---------- */
+  function applyFilter() {
+    const q = $q.dataset.chip || '';
+    let shown = 0;
+    entries.forEach(function (e) {
+      const match = !q || matches(q, e.haystack);
+      e.card.hidden = !match;
+      if (match) shown++;
+    });
     sectionHeads.forEach(function (s) {
       s.el.hidden = !s.entries.some(function (e) { return !e.card.hidden; });
     });
-
-    $count.textContent = terms.length
-      ? shown + ' / ' + entries.length + ' notes'
-      : entries.length + ' notes';
+    $count.textContent = q ? shown + ' / ' + entries.length + ' notes' : entries.length + ' notes';
     $empty.hidden = shown !== 0;
-
     document.querySelectorAll('.chip').forEach(function (c) {
       c.classList.toggle('on', c.dataset.kw === q);
     });
     onScroll();
-  }
-
-  let debounceTimer = null;
-  function onInput() {
-    clearTimeout(debounceTimer);
-    debounceTimer = setTimeout(applySearch, 80);
   }
 
   function buildChips(metas) {
@@ -243,12 +237,168 @@
       b.dataset.kw = kw;
       b.textContent = kw;
       b.addEventListener('click', function () {
-        $q.value = ($q.value.trim().toLowerCase() === kw) ? '' : kw;
-        applySearch();
+        $q.dataset.chip = ($q.dataset.chip === kw) ? '' : kw;
+        applyFilter();
       });
       $chips.appendChild(b);
     });
   }
+
+  /* ---------- command palette ---------- */
+  let palResults = [];
+  let palIndex = 0;
+  let lastJump = null;
+
+  function scoreEntry(e, terms) {
+    const q = terms.join(' ');
+    let total = 0;
+    for (let i = 0; i < terms.length; i++) {
+      const t = terms[i];
+      let s = 0;
+      if (matches(t, e.titleLower)) {
+        s = e.titleLower.indexOf(t) === 0 ? 500 : 300;
+      } else if (matches(t, e.headingsLower)) s = 200;
+      else if (matches(t, e.keysLower)) s = 150;
+      else if (matches(t, e.bodyLower)) s = 100;
+      if (!s) return 0; /* every term must match somewhere */
+      total += s;
+    }
+    if (e.titleLower === q) total += 1000;
+    return total;
+  }
+
+  function snippetFor(e, terms) {
+    const all = expandedTerms(terms);
+    let best = -1;
+    for (let i = 0; i < all.length; i++) {
+      const p = e.bodyLower.indexOf(all[i]);
+      if (p !== -1 && (best === -1 || p < best)) best = p;
+    }
+    if (best === -1) return e.bodyText.slice(0, 110) + (e.bodyText.length > 110 ? '…' : '');
+    const start = Math.max(0, best - 45);
+    let s = e.bodyText.slice(start, best + 80);
+    if (start > 0) s = '…' + s.replace(/^\S*\s/, '');
+    if (best + 80 < e.bodyText.length) s = s.replace(/\s\S*$/, '') + '…';
+    return s;
+  }
+
+  function closePal() {
+    $pal.hidden = true;
+    $pal.innerHTML = '';
+    palResults = [];
+    palIndex = 0;
+  }
+
+  function clearJumpHighlight() {
+    if (lastJump) { lastJump.bodyEl.innerHTML = lastJump.originalBody; lastJump = null; }
+  }
+
+  function openResult(i) {
+    const r = palResults[i];
+    if (!r) return;
+    const terms = $q.value.trim().toLowerCase().split(/\s+/).filter(Boolean);
+    closePal();
+    $q.value = '';
+    $q.blur();
+    clearJumpHighlight();
+    r.entry.card.hidden = false;
+    /* instant, per spec — smooth scrollIntoView is also unreliable in Chrome here */
+    r.entry.card.scrollIntoView({ block: 'start', behavior: 'instant' });
+    if (terms.length) {
+      highlight(r.entry.bodyEl, expandedTerms(terms));
+      lastJump = r.entry;
+    }
+    activeId = r.entry.meta.id; /* anchor j/k immediately, before the spy ticks */
+    trackRecent(r.entry.meta.id);
+  }
+
+  function renderPal() {
+    const q = $q.value.trim().toLowerCase();
+    const terms = q.split(/\s+/).filter(Boolean);
+    if (!terms.length) { closePal(); return; }
+
+    palResults = entries
+      .map(function (e) { return { entry: e, score: scoreEntry(e, terms) }; })
+      .filter(function (r) { return r.score > 0; })
+      .sort(function (a, b) { return b.score - a.score; })
+      .slice(0, 8);
+    palIndex = 0;
+
+    $pal.innerHTML = '';
+    if (!palResults.length) {
+      const none = document.createElement('div');
+      none.className = 'pal-none';
+      none.textContent = 'No matches — try a broader term or an abbreviation (e.g. “esbl”, “afib”).';
+      $pal.appendChild(none);
+    } else {
+      const marks = expandedTerms(terms);
+      palResults.forEach(function (r, i) {
+        const btn = document.createElement('button');
+        btn.type = 'button';
+        btn.className = 'pal-item' + (i === 0 ? ' on' : '');
+        btn.setAttribute('role', 'option');
+
+        const row = document.createElement('div');
+        row.className = 'pal-t';
+        const title = document.createElement('span');
+        title.className = 'pal-title';
+        title.textContent = r.entry.meta.title;
+        highlight(title, marks);
+        const sec = document.createElement('span');
+        sec.className = 'pal-sec';
+        sec.textContent = r.entry.meta.section;
+        row.appendChild(title);
+        row.appendChild(sec);
+        btn.appendChild(row);
+
+        const snip = document.createElement('div');
+        snip.className = 'pal-snip';
+        snip.textContent = snippetFor(r.entry, terms);
+        highlight(snip, marks);
+        btn.appendChild(snip);
+
+        btn.addEventListener('mousedown', function (ev) { ev.preventDefault(); });
+        btn.addEventListener('click', function () { openResult(i); });
+        btn.addEventListener('mousemove', function () { if (palIndex !== i) setPalIndex(i, true); });
+        $pal.appendChild(btn);
+      });
+      const hint = document.createElement('div');
+      hint.className = 'pal-hint';
+      hint.innerHTML = '<span><kbd>↑</kbd><kbd>↓</kbd> navigate</span><span><kbd>↵</kbd> open</span><span><kbd>esc</kbd> close</span>';
+      $pal.appendChild(hint);
+    }
+    $pal.hidden = false;
+  }
+
+  function setPalIndex(i, noScroll) {
+    palIndex = i;
+    const items = $pal.querySelectorAll('.pal-item');
+    items.forEach(function (el, j) { el.classList.toggle('on', j === i); });
+    if (!noScroll && items[i]) items[i].scrollIntoView({ block: 'nearest' });
+  }
+
+  let debounceTimer = null;
+  $q.addEventListener('input', function () {
+    clearTimeout(debounceTimer);
+    debounceTimer = setTimeout(renderPal, 60);
+  });
+  $q.addEventListener('focus', function () { if ($q.value.trim()) renderPal(); });
+  $q.addEventListener('keydown', function (ev) {
+    if (ev.key === 'ArrowDown' && !$pal.hidden) { ev.preventDefault(); setPalIndex(Math.min(palResults.length - 1, palIndex + 1)); }
+    else if (ev.key === 'ArrowUp' && !$pal.hidden) { ev.preventDefault(); setPalIndex(Math.max(0, palIndex - 1)); }
+    else if (ev.key === 'Enter') {
+      ev.preventDefault();
+      if ($pal.hidden && $q.value.trim()) renderPal();
+      openResult(palIndex);
+    } else if (ev.key === 'Escape') {
+      ev.stopPropagation();
+      if (!$pal.hidden) closePal();
+      else { $q.value = ''; $q.blur(); clearJumpHighlight(); }
+    }
+  });
+  document.addEventListener('click', function (ev) {
+    if (!$pal.hidden && !$pal.contains(ev.target) && ev.target !== $q) closePal();
+  });
 
   /* ---------- sidebar ---------- */
   function listHtml(ids) {
@@ -305,13 +455,20 @@
     updateSpy();
   }
 
-  /* ---------- scroll-spy · progress · subsection TOC ---------- */
+  function trackRecent(id) {
+    const i = recent.indexOf(id);
+    if (i !== -1) recent.splice(i, 1);
+    recent.unshift(id);
+    recent = recent.slice(0, 6);
+    save('recent', recent);
+  }
+
+  /* ---------- scroll-spy · progress ---------- */
   let spyTicking = false;
   let activeId = null;
 
   function updateSpy() {
     spyTicking = false;
-
     const doc = document.documentElement;
     const max = doc.scrollHeight - doc.clientHeight;
     if ($prog) $prog.style.width = (max > 0 ? (doc.scrollTop / max) * 100 : 0) + '%';
@@ -325,47 +482,44 @@
 
     document.querySelectorAll('#toc a.active').forEach(function (a) { a.classList.remove('active'); });
     document.querySelectorAll('#toc .subs').forEach(function (s) { s.remove(); });
-
     if (!cur) { activeId = null; return; }
 
     const li = $toc && $toc.querySelector('li[data-id="' + cur.meta.id + '"]');
     if (li) {
       const link = li.querySelector('a');
       if (link) link.classList.add('active');
-
       const secs = cur.bodyEl.querySelectorAll('.sec');
       if (secs.length > 1) {
         const ul = document.createElement('ul');
         ul.className = 'subs';
+        let lastPassed = -1;
         secs.forEach(function (s, i) {
           if (!s.id) s.id = cur.meta.id + '-s' + i;
-          const rect = s.getBoundingClientRect();
+          if (s.getBoundingClientRect().top <= 160) lastPassed = i;
           const item = document.createElement('li');
           const a = document.createElement('a');
           a.href = '#' + s.id;
           a.textContent = s.textContent;
-          if (rect.top <= 160) {
-            document.querySelectorAll('#toc .subs a.active').forEach(function (x) { x.classList.remove('active'); });
-            a.classList.add('active');
-          }
           item.appendChild(a);
           ul.appendChild(item);
         });
-        // keep only the last passed subsection marked active
-        const actives = ul.querySelectorAll('a.active');
-        for (let j = 0; j < actives.length - 1; j++) actives[j].classList.remove('active');
+        const links = ul.querySelectorAll('a');
+        if (lastPassed >= 0 && links[lastPassed]) links[lastPassed].classList.add('active');
         li.appendChild(ul);
       }
     }
 
     if (cur.meta.id !== activeId) {
       activeId = cur.meta.id;
-      const i = recent.indexOf(activeId);
-      if (i !== -1) recent.splice(i, 1);
-      recent.unshift(activeId);
-      recent = recent.slice(0, 6);
-      save('recent', recent);
+      trackRecent(activeId);
+      scheduleRecentRefresh();
     }
+  }
+
+  let recentRefresh = null;
+  function scheduleRecentRefresh() {
+    clearTimeout(recentRefresh);
+    recentRefresh = setTimeout(renderToc, 900);
   }
 
   function onScroll() {
@@ -382,7 +536,7 @@
     let idx = vis.findIndex(function (e) { return e.meta.id === activeId; });
     if (idx === -1) idx = 0;
     else idx = Math.min(vis.length - 1, Math.max(0, idx + delta));
-    vis[idx].card.scrollIntoView({ block: 'start' });
+    vis[idx].card.scrollIntoView({ block: 'start', behavior: 'instant' });
   }
 
   let gPending = false;
@@ -391,21 +545,57 @@
     if (ev.key === 'Escape') {
       if ($keys && $keys.open) $keys.close();
       if ($tocm && $tocm.open) $tocm.open = false;
-      if (typing) { $q.value = ''; applySearch(); $q.blur(); }
       return;
     }
     if (typing || ev.metaKey || ev.ctrlKey || ev.altKey) return;
-
     if (ev.key === '/') { ev.preventDefault(); $q.focus(); return; }
     if (ev.key === '?') { ev.preventDefault(); if ($keys) ($keys.open ? $keys.close() : $keys.showModal()); return; }
     if (ev.key === 'j') { ev.preventDefault(); jump(1); return; }
     if (ev.key === 'k') { ev.preventDefault(); jump(-1); return; }
     if (ev.key === 'g') { gPending = true; setTimeout(function () { gPending = false; }, 700); return; }
-    if (ev.key === 'h' && gPending) {
-      gPending = false;
-      window.scrollTo({ top: 0 });
-    }
+    if (ev.key === 'h' && gPending) { gPending = false; window.scrollTo({ top: 0 }); }
   });
+
+  /* ---------- note seams: related + prev/next ---------- */
+  function keywordSet(meta) {
+    return meta.keywords.split(',').map(function (k) { return k.trim().toLowerCase(); })
+      .filter(function (k) { return k && TYPE_TOKENS.indexOf(k) === -1; });
+  }
+  function buildSeams() {
+    entries.forEach(function (e, i) {
+      const mine = keywordSet(e.meta);
+      const related = entries
+        .filter(function (o) { return o !== e; })
+        .map(function (o) {
+          const shared = keywordSet(o.meta).filter(function (k) { return mine.indexOf(k) !== -1; }).length;
+          return { o: o, score: (o.meta.section === e.meta.section ? 2 : 0) + shared };
+        })
+        .filter(function (r) { return r.score >= 2; })
+        .sort(function (a, b) { return b.score - a.score; })
+        .slice(0, 3);
+
+      if (related.length) {
+        const rel = document.createElement('div');
+        rel.className = 'related';
+        rel.innerHTML = '<span class="caps">Related</span>' +
+          related.map(function (r) {
+            return '<a href="#' + r.o.meta.id + '">' + esc(r.o.meta.title) + '</a>';
+          }).join('&nbsp;&nbsp;·&nbsp;&nbsp;');
+        e.card.appendChild(rel);
+      }
+
+      const prev = entries[i - 1];
+      const next = entries[i + 1];
+      if (prev || next) {
+        const nav = document.createElement('nav');
+        nav.className = 'notenav';
+        nav.setAttribute('aria-label', 'Adjacent notes');
+        if (prev) nav.innerHTML += '<a href="#' + prev.meta.id + '"><span class="nn-label">Previous</span>' + esc(prev.meta.title) + '</a>';
+        if (next) nav.innerHTML += '<a class="nn-next" href="#' + next.meta.id + '"><span class="nn-label">Next</span>' + esc(next.meta.title) + '</a>';
+        e.card.appendChild(nav);
+      }
+    });
+  }
 
   /* ---------- init ---------- */
   function init(manifest, fragMap) {
@@ -418,6 +608,7 @@
       return { name: name, metas: metas.filter(function (m) { return (m.section || 'Unsorted') === name; }) };
     });
 
+    $list.innerHTML = '';
     ordered.forEach(function (s) {
       if (!s.metas.length) return;
       const head = document.createElement('h2');
@@ -432,23 +623,34 @@
       s.metas.forEach(function (meta) {
         const built = buildCard(meta, fragMap[meta.id]);
         $list.appendChild(built.card);
+        const alts = Array.prototype.map.call(built.bodyEl.querySelectorAll('img[alt]'), function (im) { return im.alt; }).join(' ');
+        /* text for search/snippets: clone minus <style>, so scoped CSS never leaks in */
+        const clone = built.bodyEl.cloneNode(true);
+        clone.querySelectorAll('style').forEach(function (st) { st.remove(); });
+        const bodyText = ((clone.textContent || '') + ' ' + alts).replace(/\s+/g, ' ').trim();
+        const headings = Array.prototype.map.call(built.bodyEl.querySelectorAll('.sec,.caps'), function (x) { return x.textContent; }).join(' ');
         const e = {
           meta: meta,
           card: built.card,
           bodyEl: built.bodyEl,
           titleEl: built.titleEl,
           originalBody: built.bodyEl.innerHTML,
-          haystack: (meta.title + ' ' + meta.section + ' ' + meta.keywords + ' ' +
-                     (meta.aliases || '') + ' ' + textOf(built.bodyEl)).toLowerCase()
+          titleLower: meta.title.toLowerCase(),
+          headingsLower: headings.toLowerCase(),
+          keysLower: (meta.keywords + ' ' + (meta.aliases || '') + ' ' + meta.section).toLowerCase(),
+          bodyText: bodyText,
+          bodyLower: bodyText.toLowerCase(),
+          haystack: (meta.title + ' ' + meta.section + ' ' + meta.keywords + ' ' + (meta.aliases || '') + ' ' + bodyText).toLowerCase()
         };
         entries.push(e);
         rec.entries.push(e);
       });
     });
 
+    buildSeams();
     buildChips(metas);
     renderToc();
-    applySearch();
+    applyFilter();
 
     if (location.hash) {
       const target = document.getElementById(decodeURIComponent(location.hash.slice(1)));
@@ -457,7 +659,6 @@
     updateSpy();
   }
 
-  $q.addEventListener('input', onInput);
   window.addEventListener('scroll', onScroll, { passive: true });
   window.addEventListener('resize', onScroll, { passive: true });
   if ($tocm && $tocmList) {
@@ -471,6 +672,8 @@
   if ($keys) {
     $keys.addEventListener('click', function (ev) { if (ev.target === $keys) $keys.close(); });
   }
+  const $clear = document.getElementById('clearfilter');
+  if ($clear) $clear.addEventListener('click', function () { $q.dataset.chip = ''; applyFilter(); });
 
   fetch('manifest.json', { cache: 'no-store' })
     .then(function (r) { return r.json(); })
