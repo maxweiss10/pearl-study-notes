@@ -134,7 +134,11 @@
     return { card: card, bodyEl: body, titleEl: a, pinEl: pin, mins: mins };
   }
 
-  function textOf(el) { return (el.textContent || '').replace(/\s+/g, ' ').toLowerCase(); }
+  function textOf(el) {
+    // include img alt text: raw-photo notes carry their content there
+    const alts = Array.prototype.map.call(el.querySelectorAll('img[alt]'), function (i) { return i.alt; }).join(' ');
+    return ((el.textContent || '') + ' ' + alts).replace(/\s+/g, ' ').toLowerCase();
+  }
 
   function highlight(root, terms) {
     const walker = document.createTreeWalker(root, NodeFilter.SHOW_TEXT, null);
